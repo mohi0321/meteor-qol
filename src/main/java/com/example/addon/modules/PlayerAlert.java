@@ -20,13 +20,13 @@ public class PlayerAlert extends Module {
 
     private final SettingGroup sg = settings.getDefaultGroup();
 
-    private final BoolSetting enableTeleport = sg.add(new BoolSetting.Builder()
+    private final BoolSetting enableTeleport = (BoolSetting) sg.add(new BoolSetting.Builder()
         .name("teleport-on-alert")
         .description("Automatically teleport to spawn when a player is detected.")
         .defaultValue(false)
         .build());
 
-    private final IntSetting teleportDelay = sg.add(new IntSetting.Builder()
+    private final IntSetting teleportDelay = (IntSetting) sg.add(new IntSetting.Builder()
         .name("teleport-delay")
         .description("Delay in seconds before teleporting (after player detected).")
         .defaultValue(5)
