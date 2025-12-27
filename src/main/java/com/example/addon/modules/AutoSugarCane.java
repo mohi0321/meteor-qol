@@ -1,4 +1,4 @@
-package com.example.modules;
+package com.example.addon.modules;
 
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Categories;
