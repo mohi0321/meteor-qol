@@ -1,7 +1,8 @@
-import com.example.addon.modules.AutoSugarCane;
+package com.example.addon.modules;
+
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.player.Rotations;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
@@ -15,7 +16,7 @@ public class AutoSugarCane extends Module {
     private BlockPos target;
 
     public AutoSugarCane() {
-        super(AddonTemplate.CATEGORY, "auto-sugarcane", "Automatically farms sugar cane in render distance.");
+        super(Categories.Misc, "auto-sugarcane", "Automatically farms sugar cane in render distance.");
     }
 
     @Override
@@ -42,8 +43,11 @@ public class AutoSugarCane extends Module {
             () -> {}
         );
 
-        // Walk to block
-        mc.player.setVelocity(targetVec.subtract(mc.player.getPos()).normalize().multiply(0.25));
+        // Move toward block by setting player velocity (safe API usage)
+        Vec3d playerPos = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
+        Vec3d moveVec = targetVec.subtract(playerPos).normalize().multiply(0.25);
+        // If setVelocity(Vec3d) isn't available in your mappings, use mc.player.setVelocity(moveVec.x, moveVec.y, moveVec.z);
+        mc.player.setVelocity(moveVec);
 
         // Break when in range
         if (mc.player.squaredDistanceTo(targetVec) <= 4.5) {
