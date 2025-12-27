@@ -1,7 +1,5 @@
-package com.example.addon.modules;
-
+import com.example.addon.modules.AutoSugarCane;
 import meteordevelopment.meteorclient.systems.modules.Module;
-import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.player.Rotations;
@@ -17,7 +15,7 @@ public class AutoSugarCane extends Module {
     private BlockPos target;
 
     public AutoSugarCane() {
-        super(Categories.Misc, "auto-sugarcane", "Automatically farms sugar cane in render distance.");
+        super(AddonTemplate.CATEGORY, "auto-sugarcane", "Automatically farms sugar cane in render distance.");
     }
 
     @Override
@@ -45,7 +43,7 @@ public class AutoSugarCane extends Module {
         );
 
         // Walk to block
-        PlayerUtils.walkTowards(targetVec, 0.25);
+        mc.player.setVelocity(targetVec.subtract(mc.player.getPos()).normalize().multiply(0.25));
 
         // Break when in range
         if (mc.player.squaredDistanceTo(targetVec) <= 4.5) {
