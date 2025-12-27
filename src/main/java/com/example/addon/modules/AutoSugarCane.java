@@ -3,9 +3,9 @@ package com.example.addon.modules;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.utils.player.Rotations;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
+import com.example.addon.AddonTemplate;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -16,7 +16,7 @@ public class AutoSugarCane extends Module {
     private BlockPos target;
 
     public AutoSugarCane() {
-        super(Categories.Misc, "auto-sugarcane", "Automatically farms sugar cane in render distance.");
+        super(AddonTemplate.CATEGORY, "auto-sugarcane", "Automatically farms sugar cane in render distance.");
     }
 
     @Override
@@ -36,21 +36,9 @@ public class AutoSugarCane extends Module {
 
         Vec3d targetVec = Vec3d.ofCenter(target);
 
-        // Rotate to block
-        Rotations.rotate(
-            Rotations.getYaw(targetVec),
-            Rotations.getPitch(targetVec),
-            () -> {}
-        );
-
-        // Move toward block by setting player velocity (safe API usage)
-        Vec3d playerPos = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
-        Vec3d moveVec = targetVec.subtract(playerPos).normalize().multiply(0.25);
-        // If setVelocity(Vec3d) isn't available in your mappings, use mc.player.setVelocity(moveVec.x, moveVec.y, moveVec.z);
-        mc.player.setVelocity(moveVec);
-
-        // Break when in range
-        if (mc.player.squaredDistanceTo(targetVec) <= 4.5) {
+        // Safe mode: do NOT change player rotation or velocity programmatically.
+        // Instead only attempt to break the block when the player is within a short, legitimate range.
+        if (mc.player.squaredDistanceTo(targetVec) <= 9.0) { // within ~3 blocks
             BlockUtils.breakBlock(target, true);
         }
     }
@@ -59,7 +47,8 @@ public class AutoSugarCane extends Module {
         BlockPos playerPos = mc.player.getBlockPos();
         int y = playerPos.getY();
 
-        int radius = mc.options.getViewDistance().getValue() * 16;
+        // Use a conservative fixed search radius (blocks). Avoid querying client options which may not be available.
+        int radius = 128;
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
