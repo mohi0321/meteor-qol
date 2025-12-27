@@ -1,4 +1,5 @@
 package com.example.addon;
+import com.example.modules.AutoSugarCane;
 
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
