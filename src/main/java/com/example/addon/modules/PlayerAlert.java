@@ -10,10 +10,12 @@ import net.minecraft.client.toast.ToastManager;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.text.Text;
 import com.example.addon.AddonTemplate;
+import java.util.Map;
+import java.util.HashMap;
 
 public class PlayerAlert extends Module {
     private static final long ALERT_COOLDOWN = 5000; // 5 seconds between alerts per player
-    private java.util.Map<String, Long> lastAlertTime = new java.util.HashMap<>();
+    private Map<String, Long> lastAlertTime = new HashMap<>();
 
     private final BoolSetting enableTeleport = settings.add(new BoolSetting.Builder()
         .name("teleport-on-alert")
