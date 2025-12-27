@@ -18,13 +18,13 @@ public class PlayerAlert extends Module {
 
     private final Settings settings = new Settings();
 
-    private final BoolSetting enableTeleport = settings.getDefaultCategory().add(new BoolSetting.Builder()
+    private final BoolSetting enableTeleport = settings.getGeneral().add(new BoolSetting.Builder()
         .name("teleport-on-alert")
         .description("Automatically teleport to spawn when a player is detected.")
         .defaultValue(false)
         .build());
 
-    private final IntSetting teleportDelay = settings.getDefaultCategory().add(new IntSetting.Builder()
+    private final IntSetting teleportDelay = settings.getGeneral().add(new IntSetting.Builder()
         .name("teleport-delay")
         .description("Delay in seconds before teleporting (after player detected).")
         .defaultValue(5)
@@ -36,11 +36,6 @@ public class PlayerAlert extends Module {
 
     public PlayerAlert() {
         super(AddonTemplate.CATEGORY, "player-alert", "Alerts you when a player enters render distance.");
-    }
-
-    @Override
-    public Settings getSettings() {
-        return settings;
     }
 
     @Override
@@ -71,7 +66,7 @@ public class PlayerAlert extends Module {
                 ToastManager toastManager = mc.getToastManager();
                 SystemToast toast = SystemToast.create(
                     mc,
-                    SystemToast.Type.TUTORIAL_HINT,
+                    SystemToast.Type.NARRATOR_TOGGLE,
                     Text.literal("Player Detected!"),
                     Text.literal(playerName + " (" + String.format("%.1f", distance) + "m)")
                 );
