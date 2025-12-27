@@ -1,5 +1,7 @@
 package com.example.addon;
 import com.example.addon.modules.AutoSugarCane;
+import com.example.addon.modules.PlayerAlert;
+import com.example.addon.modules.AutoSpawn;
 
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
@@ -24,6 +26,8 @@ public class AddonTemplate extends MeteorAddon {
 
         // Modules
         Modules.get().add(new AutoSugarCane());
+        Modules.get().add(new PlayerAlert());
+        Modules.get().add(new AutoSpawn());
 
         // Commands
         Commands.add(new CommandExample());
