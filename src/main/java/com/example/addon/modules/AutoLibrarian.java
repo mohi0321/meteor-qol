@@ -308,10 +308,16 @@ public class AutoLibrarian extends Module {
     private void setTargetJobSite() {
         if (villager == null || mc.world == null) return;
         
-        List<BlockPos> potSpots = BlockUtils.getAllInBox(
-                BlockPos.ofFloored(mc.player.getEyePos()).add(-range.get().intValue(), -range.get().intValue(), -range.get().intValue()),
-                BlockPos.ofFloored(mc.player.getEyePos()).add(range.get().intValue(), range.get().intValue(), range.get().intValue())
-        );
+        List<BlockPos> potSpots = new ArrayList<>();
+        int r = range.get().intValue();
+        BlockPos center = BlockPos.ofFloored(mc.player.getEyePos());
+        for (int x = -r; x <= r; x++) {
+            for (int y = -r; y <= r; y++) {
+                for (int z = -r; z <= r; z++) {
+                    potSpots.add(center.add(x, y, z));
+                }
+            }
+        }
         
         jobSite = potSpots.stream()
             .filter(pos -> mc.world.getBlockState(pos).getBlock() == Blocks.LECTERN)
