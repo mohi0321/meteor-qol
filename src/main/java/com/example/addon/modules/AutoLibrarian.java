@@ -16,61 +16,135 @@ import com.example.addon.AddonTemplate;
  * basic tick handler as a starting point for completing the full feature.
  */
 public class AutoLibrarian extends Module {
-    private final SettingGroup sg = settings.getDefaultGroup();
+	private final SettingGroup sg = settings.getDefaultGroup();
 
-    private final BoolSetting lockInTrade = sg.add(new BoolSetting.Builder()
-        .name("lock-in-trade")
-        .description("Automatically buy an item to lock in a villager's trade when found.")
-        .defaultValue(false)
-        .build());
+	private final BoolSetting lockInTrade = sg.add(new BoolSetting.Builder()
+		.name("lock-in-trade")
+		.description("Automatically buy an item to lock in a villager's trade when found.")
+		.defaultValue(false)
+		.build());
 
-    private final IntSetting range = sg.add(new IntSetting.Builder()
-        .name("range")
-        .description("Search range for villagers (blocks).")
-        .defaultValue(5)
-        .min(1)
-        .max(64)
-        .build());
+	private final IntSetting range = sg.add(new IntSetting.Builder()
+		.name("range")
+		.description("Search range for villagers (blocks).")
+		.defaultValue(5)
+		.min(1)
+		.max(64)
+		.build());
 
-    private final IntSetting repairThreshold = sg.add(new IntSetting.Builder()
-        .name("repair-threshold")
-        .description("Don't use tools below this durability when performing actions.")
-        .defaultValue(1)
-        .min(0)
-        .max(100)
-        .build());
+	private final IntSetting repairThreshold = sg.add(new IntSetting.Builder()
+		.name("repair-threshold")
+		.description("Don't use tools below this durability when performing actions.")
+		.defaultValue(1)
+		.min(0)
+		.max(100)
+		.build());
 
-    public AutoLibrarian() {
-        super(AddonTemplate.CATEGORY, "auto-librarian", "(Skeleton) Train villagers to become librarians.");
-    }
+	public AutoLibrarian() {
+		super(AddonTemplate.CATEGORY, "auto-librarian", "(Skeleton) Train villagers to become librarians.");
+	}
 
-    @Override
-    public void onActivate() {
-        info("AutoLibrarian enabled (skeleton port)");
-    }
+	@Override
+	public void onActivate() {
+		info("AutoLibrarian enabled (skeleton port)");
+	}
 
-    @Override
-    public void onDeactivate() {
-        info("AutoLibrarian disabled");
-    }
+	@Override
+	public void onDeactivate() {
+		info("AutoLibrarian disabled");
+	}
 
-    @EventHandler
-    private void onTick(TickEvent.Pre event) {
-        // This is a lightweight placeholder. A full port would:
-        // - Find nearby villagers of profession LIBRARIAN/level 1
-        // - Place/break lecterns to retrain villagers
-        // - Open trade screen and inspect offers
-        // - Optionally buy to lock in trade
-        // Implementing the above requires a detailed mapping of Wurst's code
-        // to Meteor Client's API and the target Minecraft mappings.
+	@EventHandler
+	private void onTick(TickEvent.Pre event) {
+		// This is a lightweight placeholder. A full port would:
+		// - Find nearby villagers of profession LIBRARIAN/level 1
+		// - Place/break lecterns to retrain villagers
+		// - Open trade screen and inspect offers
+		// - Optionally buy to lock in trade
+		// Implementing the above requires a detailed mapping of Wurst's code
+		// to Meteor Client's API and the target Minecraft mappings.
 
-        // For now, we keep a simple heartbeat so the module compiles and can be
-        // iteratively extended.
-        if (mc.player == null || mc.world == null) return;
+		// For now, we keep a simple heartbeat so the module compiles and can be
+		// iteratively extended.
+		if (mc.player == null || mc.world == null) return;
 
-        // Example: log every few seconds (quiet by default)
-        // Real villager handling to be implemented in follow-up changes.
-    }
+		// Example: log every few seconds (quiet by default)
+		// Real villager handling to be implemented in follow-up changes.
+	}
+}
+package com.example.addon.modules;
+
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.settings.SettingGroup;
+import meteordevelopment.meteorclient.settings.BoolSetting;
+import meteordevelopment.meteorclient.settings.IntSetting;
+import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.orbit.EventHandler;
+import com.example.addon.AddonTemplate;
+
+/**
+ * AutoLibrarian (partial port)
+ *
+ * This is an initial port/skeleton of the WurstClient AutoLibrarian hack
+ * adapted to Meteor Client's module structure. It provides settings and a
+ * basic tick handler as a starting point for completing the full feature.
+ */
+public class AutoLibrarian extends Module {
+	private final SettingGroup sg = settings.getDefaultGroup();
+
+	private final BoolSetting lockInTrade = sg.add(new BoolSetting.Builder()
+		.name("lock-in-trade")
+		.description("Automatically buy an item to lock in a villager's trade when found.")
+		.defaultValue(false)
+		.build());
+
+	private final IntSetting range = sg.add(new IntSetting.Builder()
+		.name("range")
+		.description("Search range for villagers (blocks).")
+		.defaultValue(5)
+		.min(1)
+		.max(64)
+		.build());
+
+	private final IntSetting repairThreshold = sg.add(new IntSetting.Builder()
+		.name("repair-threshold")
+		.description("Don't use tools below this durability when performing actions.")
+		.defaultValue(1)
+		.min(0)
+		.max(100)
+		.build());
+
+	public AutoLibrarian() {
+		super(AddonTemplate.CATEGORY, "auto-librarian", "(Skeleton) Train villagers to become librarians.");
+	}
+
+	@Override
+	public void onActivate() {
+		info("AutoLibrarian enabled (skeleton port)");
+	}
+
+	@Override
+	public void onDeactivate() {
+		info("AutoLibrarian disabled");
+	}
+
+	@EventHandler
+	private void onTick(TickEvent.Pre event) {
+		// This is a lightweight placeholder. A full port would:
+		// - Find nearby villagers of profession LIBRARIAN/level 1
+		// - Place/break lecterns to retrain villagers
+		// - Open trade screen and inspect offers
+		// - Optionally buy to lock in trade
+		// Implementing the above requires a detailed mapping of Wurst's code
+		// to Meteor Client's API and the target Minecraft mappings.
+
+		// For now, we keep a simple heartbeat so the module compiles and can be
+		// iteratively extended.
+		if (mc.player == null || mc.world == null) return;
+
+		// Example: log every few seconds (quiet by default)
+		// Real villager handling to be implemented in follow-up changes.
+	}
 }
 /*
  * Copyright (c) 2014-2025 Wurst-Imperium and contributors.
