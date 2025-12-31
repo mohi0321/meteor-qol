@@ -1,7 +1,7 @@
 package com.example.addon;
 import com.example.addon.modules.AutoLibrarian;
 import com.example.addon.modules.EnchantedBookBuyer;
-
+import com.example.addon.modules.AutoChat;
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
 import com.mojang.logging.LogUtils;
