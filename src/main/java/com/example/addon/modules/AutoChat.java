@@ -1,4 +1,4 @@
-package com.example.addon.modules;
+package com.example.addon.AddonTemplate;
 
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.settings.*;
