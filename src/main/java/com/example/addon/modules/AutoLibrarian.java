@@ -11,9 +11,9 @@ import com.example.addon.AddonTemplate;
 /**
  * AutoLibrarian (partial port)
  *
- * This is an initial port/skeleton of the WurstClient AutoLibrarian hack
- * adapted to Meteor Client's module structure. It provides settings and a
- * basic tick handler as a starting point for completing the full feature.
+ * This file contains the Meteor Client module for AutoLibrarian. The original
+ * WurstClient implementation was intentionally not copied here; instead the
+ * feature will be ported incrementally and mapped to Meteor Client APIs.
  */
 public class AutoLibrarian extends Module {
 	private final SettingGroup sg = settings.getDefaultGroup();
@@ -56,20 +56,8 @@ public class AutoLibrarian extends Module {
 
 	@EventHandler
 	private void onTick(TickEvent.Pre event) {
-		// This is a lightweight placeholder. A full port would:
-		// - Find nearby villagers of profession LIBRARIAN/level 1
-		// - Place/break lecterns to retrain villagers
-		// - Open trade screen and inspect offers
-		// - Optionally buy to lock in trade
-		// Implementing the above requires a detailed mapping of Wurst's code
-		// to Meteor Client's API and the target Minecraft mappings.
-
-		// For now, we keep a simple heartbeat so the module compiles and can be
-		// iteratively extended.
+		// Placeholder: implement full port logic here.
 		if (mc.player == null || mc.world == null) return;
-
-		// Example: log every few seconds (quiet by default)
-		// Real villager handling to be implemented in follow-up changes.
 	}
 }
 package com.example.addon.modules;
