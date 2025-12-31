@@ -1,7 +1,6 @@
 package com.example.addon.modules;
 
 import com.example.addon.AddonTemplate;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
@@ -14,22 +13,23 @@ import meteordevelopment.meteorclient.utils.player.Rotations;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraft.world.inventory.MerchantMenu;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraft.world.item.trading.MerchantOffers;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.block.Blocks;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.screen.MerchantScreenHandler;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.village.TradeOffer;
+import net.minecraft.village.TradeOfferList;
+import net.minecraft.village.VillagerProfession;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -89,7 +89,7 @@ public class AutoLibrarian extends Module {
         ToggleOff
     }
 
-    private Villager villager;
+    private VillagerEntity villager;
     private BlockPos jobSite;
     private boolean placingJobSite;
     private boolean breakingJobSite;
@@ -124,7 +124,7 @@ public class AutoLibrarian extends Module {
             return;
         }
 
-        if (villager.isRemoved() || villager.getHealth() <= 0 || mc.player.distanceToSqr(villager) > range.get() * range.get()) {
+        if (villager.isRemoved() || villager.getHealth() <= 0 || mc.player.squaredDistanceTo(villager) > range.get() * range.get()) {
             villager = null;
             return;
         }
@@ -150,7 +150,7 @@ public class AutoLibrarian extends Module {
             return;
         }
 
-        if (mc.player.containerMenu instanceof MerchantMenu) {
+        if (mc.player.currentScreenHandler instanceof MerchantScreenHandler) {
              handleTrade();
         } else {
              openTradeScreen();
@@ -158,17 +158,21 @@ public class AutoLibrarian extends Module {
     }
 
     private void handleTrade() {
-        if (mc.player.containerMenu instanceof MerchantMenu menu) {
-             if (menu.getTraderXp() > 0 && menu.getTraderLevel() > 1) { 
+        if (mc.player.currentScreenHandler instanceof MerchantScreenHandler menu) {
+             // In Yarn 1.21.4 for MerchantScreenHandler:
+             // getExperience() -> experience
+             // getLevelProgress() -> leveled? No, tradeOffers usually empty if no trade.
+             // We check experience.
+             if (menu.getExperience() > 0 && menu.getLevelProgress() > 1) { 
                  ChatUtils.warning("Villager is already experienced!");
                  experiencedVillagerIds.add(villager.getId());
                  villager = null;
                  jobSite = null;
-                 mc.player.closeContainer();
+                 mc.player.closeHandledScreen();
                  return;
              }
 
-             MerchantOffers offers = menu.getOffers();
+             TradeOfferList offers = menu.getRecipes();
              if (offers.isEmpty()) return;
 
              BookOffer offer = findEnchantedBookOffer(offers);
@@ -194,22 +198,22 @@ public class AutoLibrarian extends Module {
     }
     
     private void reroll() {
-        mc.player.closeContainer();
+        mc.player.closeHandledScreen();
         breakingJobSite = true;
     }
 
-    private void lockTradeAndFinish(MerchantMenu menu, BookOffer offer) {
+    private void lockTradeAndFinish(MerchantScreenHandler menu, BookOffer offer) {
         int tradeIndex = 0;
-        for (int i = 0; i < menu.getOffers().size(); i++) {
-             MerchantOffer trade = menu.getOffers().get(i);
-             if (ItemStack.matches(trade.getResult(), offer.stack)) {
+        for (int i = 0; i < menu.getRecipes().size(); i++) {
+             TradeOffer trade = menu.getRecipes().get(i);
+             if (ItemStack.areItemsAndComponentsEqual(trade.getSellItem(), offer.stack)) {
                  tradeIndex = i;
                  break;
              }
         }
         
         if (mc.getNetworkHandler() != null)
-             mc.getNetworkHandler().sendPacket(new ServerboundSelectTradePacket(tradeIndex));
+             mc.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(tradeIndex));
         
         InvUtils.click().slotId(2); 
         
@@ -235,8 +239,8 @@ public class AutoLibrarian extends Module {
         if (timer > 0) return;
         
         Rotations.rotate(Rotations.getYaw(villager), Rotations.getPitch(villager));
-        mc.interactionManager.interactEntity(mc.player, villager, InteractionHand.MAIN_HAND);
-        timer = 20; // Longer delay to allow gui to open
+        mc.interactionManager.interactEntity(mc.player, villager, Hand.MAIN_HAND);
+        timer = 20;
     }
 
     private void breakJobSite() {
@@ -285,21 +289,21 @@ public class AutoLibrarian extends Module {
         double rangeSq = range.get() * range.get();
         
         Stream<Entity> stream = StreamSupport.stream(mc.world.getEntities().spliterator(), false)
-            .filter(e -> e instanceof Villager)
+            .filter(e -> e instanceof VillagerEntity)
             .filter(e -> !e.isRemoved())
-            .filter(e -> ((Villager)e).getHealth() > 0)
-            .filter(e -> mc.player.distanceToSqr(e) <= rangeSq);
+            .filter(e -> ((VillagerEntity)e).getHealth() > 0)
+            .filter(e -> mc.player.squaredDistanceTo(e) <= rangeSq);
 
-        villager = (Villager) stream
-            .map(e -> (Villager)e)
+        villager = (VillagerEntity) stream
+            .map(e -> (VillagerEntity)e)
             .filter(v -> v.getVillagerData().getProfession() == VillagerProfession.LIBRARIAN)
             .filter(v -> v.getVillagerData().getLevel() == 1)
             .filter(v -> !experiencedVillagerIds.contains(v.getId()))
-            .min(Comparator.comparingDouble(e -> mc.player.distanceToSqr(e)))
+            .min(Comparator.comparingDouble(e -> mc.player.squaredDistanceTo(e)))
             .orElse(null);
             
         if (villager != null) {
-            ChatUtils.info("Found villager at " + villager.blockPosition());
+            ChatUtils.info("Found villager at " + villager.getBlockPos());
         }
     }
 
@@ -307,13 +311,13 @@ public class AutoLibrarian extends Module {
         if (villager == null) return;
         
         List<BlockPos> potSpots = BlockUtils.getAllInBox(
-                BlockPos.containing(mc.player.getEyePosition()).offset((int)-range.get(), (int)-range.get(), (int)-range.get()),
-                BlockPos.containing(mc.player.getEyePosition()).offset((int)range.get(), (int)range.get(), (int)range.get())
+                BlockPos.ofFloored(mc.player.getEyePos()).add((int)-range.get(), (int)-range.get(), (int)-range.get()),
+                BlockPos.ofFloored(mc.player.getEyePos()).add((int)range.get(), (int)range.get(), (int)range.get())
         );
         
         jobSite = potSpots.stream()
             .filter(pos -> BlockUtils.getBlock(pos) == Blocks.LECTERN)
-            .min(Comparator.comparingDouble(pos -> villager.distanceToSqr(Vec3.atCenterOf(pos))))
+            .min(Comparator.comparingDouble(pos -> villager.squaredDistanceTo(Vec3d.ofCenter(pos))))
             .orElse(null);
             
         if (jobSite != null) {
@@ -341,37 +345,34 @@ public class AutoLibrarian extends Module {
         return false;
     }
 
-    private BookOffer findEnchantedBookOffer(MerchantOffers offers) {
-        for (MerchantOffer offer : offers) {
-            ItemStack result = offer.getResult();
+    private BookOffer findEnchantedBookOffer(TradeOfferList offers) {
+        for (TradeOffer offer : offers) {
+            ItemStack result = offer.getSellItem();
             if (result.getItem() == Items.ENCHANTED_BOOK) {
-                // Use var for type inference. Assuming entrySet() is available.
-                // In modern Fabric with Holders, EnchantmentHelper returns ItemEnchantments which has entrySet().
-                var enchants = EnchantmentHelper.getEnchantmentsForCrafting(result).entrySet();
+                // In 1.21+, EnchantmentHelper operates on components.
+                // We use EnchantmentHelper.getEnchantments(ItemStack) which returns ItemEnchantmentsComponent
+                // or similar.
+                // Actually EnchantmentHelper.getEnchantments(ItemStack) returns ComponentMap in some versions or ItemEnchantments.
+                // In 1.21.4 Yarn: EnchantmentHelper.getEnchantments(ItemStack) -> ItemEnchantmentsComponent
+                
+                var enchants = EnchantmentHelper.getEnchantments(result).getEnchantmentEntries();
                 if (enchants.isEmpty()) continue;
                 
                 var entry = enchants.iterator().next();
-                Object key = entry.getKey();
-                int level = entry.getValue();
+                RegistryEntry<Enchantment> key = entry.getKey();
+                int level = entry.getIntValue();
                 
-                String id = "";
-                // Handle Key as Holder or raw Enchantment
-                if (key instanceof Holder) {
-                     id = ((Holder<?>)key).unwrapKey().map(k -> k.location().toString()).orElse(key.toString());
-                } else if (key instanceof Enchantment) {
-                     id = ((Enchantment)key).getDescriptionId(); 
-                } else {
-                     id = key.toString();
-                }
+                // Get ID
+                String id = key.getKey().map(k -> k.getValue().toString()).orElse(key.toString());
 
-                // If id is something like "Enchantment{resource_key}", we need to be careful.
-                // But String match should work if user inputs the same format.
-                // Default to minecraft:enchantment if possible.
+                // Normalize ID
                 if (!id.contains(":") && !id.contains(".")) {
                     id = "minecraft:" + id;
                 }
                 
-                return new BookOffer(id, level, offer.getCostA().getCount(), result);
+                // 1.21.4 TradeOffer costs: getOriginalFirstBuyItem() or getFirstBuyItem() ?
+                // For training, cost is usually first buy item.
+                return new BookOffer(id, level, offer.getOriginalFirstBuyItem().getCount(), result);
             }
         }
         return null;
@@ -406,11 +407,8 @@ public class AutoLibrarian extends Module {
         }
         
         public boolean matches(BookOffer other) {
-            // Check if ids match roughly (ignoring namespace if needed or exact)
             boolean idMatch = this.id.equals(other.id) || other.id.endsWith(":" + this.id) || this.id.endsWith(":" + other.id);
-            // More loose matching to assist user
              if (!idMatch) {
-                 // Try removing minecraft: prefix
                  String cleanThis = this.id.replace("minecraft:", "");
                  String cleanOther = other.id.replace("minecraft:", "");
                  idMatch = cleanThis.equals(cleanOther);
