@@ -1,5 +1,6 @@
 package com.example.addon;
 import com.example.addon.modules.AutoLibrarian;
+import com.example.addon.modules.EnchantedBookBuyer;
 
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
@@ -24,6 +25,7 @@ public class AddonTemplate extends MeteorAddon {
 
         // Modules
         Modules.get().add(new AutoLibrarian());
+        Modules.get().add(new EnchantedBookBuyer());
 
         // Commands
         Commands.add(new CommandExample());
