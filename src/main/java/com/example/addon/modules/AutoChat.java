@@ -45,7 +45,7 @@ public class AutoChat extends Module {
         if (!isActive()) return;
 
         if (timer <= 0) {
-            ChatUtils.send(message.get());
+            ChatUtils.sendPlayerMsg(message.get());
             timer = delay.get()*20;
         } else {
             timer--;
