@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 
 public class AddonTemplate extends MeteorAddon {
     public static final Logger LOG = LogUtils.getLogger();
-    public static final Category CATEGORY = new Category("Example");
-    public static final HudGroup HUD_GROUP = new HudGroup("Example");
+    public static final Category CATEGORY = new Category("Enhanced");
+    public static final HudGroup HUD_GROUP = new HudGroup("Enhanced");
 
     @Override
     public void onInitialize() {
@@ -46,6 +46,6 @@ public class AddonTemplate extends MeteorAddon {
 
     @Override
     public GithubRepo getRepo() {
-        return new GithubRepo("MeteorDevelopment", "meteor-addon-template");
+        return new GithubRepo("Mohi0321", "meteor-qol");
     }
 }
