@@ -15,16 +15,12 @@ import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -33,12 +29,9 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -123,7 +116,7 @@ public class AutoLibrarian extends Module {
     private void onTick(TickEvent.Pre event) {
         if (timer > 0) {
             timer--;
-            // Simple delay handling
+            return;
         }
 
         if (villager == null) {
@@ -143,8 +136,6 @@ public class AutoLibrarian extends Module {
         
         // Ensure job site is still a lectern or air (if we are placing)
         if (!placingJobSite && BlockUtils.getBlock(jobSite) != Blocks.LECTERN && BlockUtils.getBlock(jobSite) != Blocks.AIR) {
-             // If it's not a lectern and not air, we might have lost track or it changed?
-             // Re-evaluate
              setTargetJobSite();
              return;
         }
@@ -159,33 +150,16 @@ public class AutoLibrarian extends Module {
             return;
         }
 
-        // Interaction logic
-        if (!(mc.currentScreen instanceof MerchantMenu)) { // Note: MerchantScreen in yarn, but we check generic screen type or specific
-            // Check if we are in a MerchantScreen (container)
-             if (mc.player.containerMenu instanceof MerchantMenu) {
-                 // Already open?
-                 handleTrade();
-             } else {
-                 // Open trade
-                 openTradeScreen();
-             }
+        if (mc.player.containerMenu instanceof MerchantMenu) {
+             handleTrade();
         } else {
-            handleTrade();
+             openTradeScreen();
         }
     }
 
-    // Since mc.currentScreen is the GUI, and mc.player.currentScreenHandler is the container logic.
-    // In Meteor/Fabric: mc.currentScreen is Screen. 
-    // We should check if mc.currentScreen is instance of MerchantScreen.
-    // However, we can also check mc.player.currentScreenHandler which is the menu.
-
     private void handleTrade() {
-        // Wait a bit if we just opened it?
         if (mc.player.containerMenu instanceof MerchantMenu menu) {
-             // Check XP
              if (menu.getTraderXp() > 0 && menu.getTraderLevel() > 1) { 
-                 // Level > 1 usually means experienced, but getTraderXp > 0 is stricter for Novice with XP.
-                 // Actually, a novice has 0 XP. If > 0, they traded.
                  ChatUtils.warning("Villager is already experienced!");
                  experiencedVillagerIds.add(villager.getId());
                  villager = null;
@@ -195,11 +169,10 @@ public class AutoLibrarian extends Module {
              }
 
              MerchantOffers offers = menu.getOffers();
-             if (offers.isEmpty()) return; // Wait for offers
+             if (offers.isEmpty()) return;
 
              BookOffer offer = findEnchantedBookOffer(offers);
              if (offer == null) {
-                 // No book, reroll
                  reroll();
                  return;
              }
@@ -207,7 +180,6 @@ public class AutoLibrarian extends Module {
              ChatUtils.info("Found book: " + offer.name + " " + offer.level + " for " + offer.price + " emeralds.");
 
              if (isWanted(offer)) {
-                 // Lock in?
                  if (lockInTrade.get()) {
                      lockTradeAndFinish(menu, offer);
                  } else {
@@ -227,9 +199,7 @@ public class AutoLibrarian extends Module {
     }
 
     private void lockTradeAndFinish(MerchantMenu menu, BookOffer offer) {
-        // Find the index of the trade (assumed 0 or find it)
-        // Usually the book trade is one of the first two.
-        int tradeIndex = -1;
+        int tradeIndex = 0;
         for (int i = 0; i < menu.getOffers().size(); i++) {
              MerchantOffer trade = menu.getOffers().get(i);
              if (ItemStack.matches(trade.getResult(), offer.stack)) {
@@ -238,20 +208,9 @@ public class AutoLibrarian extends Module {
              }
         }
         
-        if (tradeIndex == -1) {
-            // Should not happen if offer came from offers
-            tradeIndex = 0; 
-        }
-
-        // Select trade
         if (mc.getNetworkHandler() != null)
              mc.getNetworkHandler().sendPacket(new ServerboundSelectTradePacket(tradeIndex));
         
-        // Move items? or just click output?
-        // Simple way: Click output slot (2)
-        // Ensure we have ingredients? logic assumes user has them as per original Wurst code
-        
-        // Slot 2 is result
         InvUtils.click().slotId(2); 
         
         ChatUtils.info("Locked in trade!");
@@ -262,9 +221,6 @@ public class AutoLibrarian extends Module {
     private void updateWantedList(BookOffer offer) {
         if (updateMode.get() == UpdateMode.Remove) {
             List<String> current = new ArrayList<>(wantedBooks.get());
-             // Remove the one that matched
-             // We need to parse and match again or pass the string
-             // Simplest: remove exact match or loosely match
              current.removeIf(s -> {
                  BookOffer wanted = BookOffer.parse(s);
                  return wanted != null && wanted.matches(offer);
@@ -280,7 +236,7 @@ public class AutoLibrarian extends Module {
         
         Rotations.rotate(Rotations.getYaw(villager), Rotations.getPitch(villager));
         mc.interactionManager.interactEntity(mc.player, villager, InteractionHand.MAIN_HAND);
-        timer = 10;
+        timer = 20; // Longer delay to allow gui to open
     }
 
     private void breakJobSite() {
@@ -292,21 +248,12 @@ public class AutoLibrarian extends Module {
         if (BlockUtils.getBlock(jobSite) == Blocks.AIR) {
             breakingJobSite = false;
             placingJobSite = true;
-            timer = 5; // Delay before place
+            timer = 10;
             return;
         }
 
-        // Need an axe?
-        FindItemResult axe = InvUtils.find(item -> item.getItem() instanceof net.minecraft.world.item.AxeItem);
-        if (!axe.found()) {
-            // fallback
-        } else {
-            // InvUtils.swap(axe.slot(), true); // Swap to axe (silent? Wurst does equipBestTool)
-            // We can just use interactionManager default breaking which swaps automatically if configured or we swap explicitly
-        }
-        
-        Rotations.rotate(Rotations.getYaw(jobSite), Rotations.getPitch(jobSite)); // Look at block
-        BlockUtils.breakBlock(jobSite, true); // true = swing
+        Rotations.rotate(Rotations.getYaw(jobSite), Rotations.getPitch(jobSite));
+        BlockUtils.breakBlock(jobSite, true);
     }
 
     private void placeJobSite() {
@@ -331,7 +278,7 @@ public class AutoLibrarian extends Module {
 
         BlockUtils.place(jobSite, lectern, true, 50, true, true);
         placingJobSite = false;
-        timer = 5; // Delay after place
+        timer = 10;
     }
 
     private void setTargetVillager() {
@@ -346,7 +293,7 @@ public class AutoLibrarian extends Module {
         villager = (Villager) stream
             .map(e -> (Villager)e)
             .filter(v -> v.getVillagerData().getProfession() == VillagerProfession.LIBRARIAN)
-            .filter(v -> v.getVillagerData().getLevel() == 1) // Novice
+            .filter(v -> v.getVillagerData().getLevel() == 1)
             .filter(v -> !experiencedVillagerIds.contains(v.getId()))
             .min(Comparator.comparingDouble(e -> mc.player.distanceToSqr(e)))
             .orElse(null);
@@ -358,10 +305,6 @@ public class AutoLibrarian extends Module {
 
     private void setTargetJobSite() {
         if (villager == null) return;
-        
-        // Identify the lectern the villager is bound to, or the nearest lectern
-        // Logic: Scan nearby lecterns.
-        // Wurst logic: all lecterns in range, min dist to villager.
         
         List<BlockPos> potSpots = BlockUtils.getAllInBox(
                 BlockPos.containing(mc.player.getEyePosition()).offset((int)-range.get(), (int)-range.get(), (int)-range.get()),
@@ -388,7 +331,6 @@ public class AutoLibrarian extends Module {
         }
     }
     
-    // --- Helpers ---
     private boolean isWanted(BookOffer offer) {
         for (String s : wantedBooks.get()) {
             BookOffer wanted = BookOffer.parse(s);
@@ -403,17 +345,33 @@ public class AutoLibrarian extends Module {
         for (MerchantOffer offer : offers) {
             ItemStack result = offer.getResult();
             if (result.getItem() == Items.ENCHANTED_BOOK) {
-                // Get Enchantments
-                Map<Holder<Enchantment>, Integer> enchants = EnchantmentHelper.getEnchantmentsForCrafting(result);
-                // Usually only one
-                if (!enchants.isEmpty()) {
-                    Map.Entry<Holder<Enchantment>, Integer> entry = enchants.entrySet().iterator().next();
-                    // Component logic in newer versions might differ slightly, but this is standard 1.20+
-                    // We need the string ID? or just compare Holder?
-                    // Wrapper for comparison.
-                    String id = entry.getKey().unwrapKey().map(k -> k.location().toString()).orElse("");
-                    return new BookOffer(id, entry.getValue(), offer.getCostA().getCount(), result);
+                // Use var for type inference. Assuming entrySet() is available.
+                // In modern Fabric with Holders, EnchantmentHelper returns ItemEnchantments which has entrySet().
+                var enchants = EnchantmentHelper.getEnchantmentsForCrafting(result).entrySet();
+                if (enchants.isEmpty()) continue;
+                
+                var entry = enchants.iterator().next();
+                Object key = entry.getKey();
+                int level = entry.getValue();
+                
+                String id = "";
+                // Handle Key as Holder or raw Enchantment
+                if (key instanceof Holder) {
+                     id = ((Holder<?>)key).unwrapKey().map(k -> k.location().toString()).orElse(key.toString());
+                } else if (key instanceof Enchantment) {
+                     id = ((Enchantment)key).getDescriptionId(); 
+                } else {
+                     id = key.toString();
                 }
+
+                // If id is something like "Enchantment{resource_key}", we need to be careful.
+                // But String match should work if user inputs the same format.
+                // Default to minecraft:enchantment if possible.
+                if (!id.contains(":") && !id.contains(".")) {
+                    id = "minecraft:" + id;
+                }
+                
+                return new BookOffer(id, level, offer.getCostA().getCount(), result);
             }
         }
         return null;
@@ -431,10 +389,7 @@ public class AutoLibrarian extends Module {
             this.level = level;
             this.price = price;
             this.stack = stack;
-             // Try to get name
-             this.name = id; // Fallback
-             // If we can get a readable name?
-             // Component n = stack.getHoverName();
+            this.name = id; 
         }
 
         public static BookOffer parse(String s) {
@@ -444,15 +399,24 @@ public class AutoLibrarian extends Module {
                     String id = parts[0];
                     int level = Integer.parseInt(parts[1]);
                     int maxPrice = parts.length > 2 ? Integer.parseInt(parts[2]) : 64;
-                    BookOffer b = new BookOffer(id, level, maxPrice, null);
-                    return b;
+                    return new BookOffer(id, level, maxPrice, null);
                 }
             } catch (Exception e) {}
             return null;
         }
         
         public boolean matches(BookOffer other) {
-            return this.id.equals(other.id) && other.level >= this.level && other.price <= this.price;
+            // Check if ids match roughly (ignoring namespace if needed or exact)
+            boolean idMatch = this.id.equals(other.id) || other.id.endsWith(":" + this.id) || this.id.endsWith(":" + other.id);
+            // More loose matching to assist user
+             if (!idMatch) {
+                 // Try removing minecraft: prefix
+                 String cleanThis = this.id.replace("minecraft:", "");
+                 String cleanOther = other.id.replace("minecraft:", "");
+                 idMatch = cleanThis.equals(cleanOther);
+             }
+            
+            return idMatch && other.level >= this.level && other.price <= this.price;
         }
     }
 }
