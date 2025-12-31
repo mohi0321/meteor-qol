@@ -1,170 +1,31 @@
 package com.example.addon.modules;
 
-import meteordevelopment.meteorclient.systems.modules.Module;
-import meteordevelopment.meteorclient.settings.SettingGroup;
-import meteordevelopment.meteorclient.settings.BoolSetting;
-import meteordevelopment.meteorclient.settings.IntSetting;
-import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.orbit.EventHandler;
 import com.example.addon.AddonTemplate;
-
-/**
- * AutoLibrarian (partial port)
- *
- * This file contains the Meteor Client module for AutoLibrarian. The original
- * WurstClient implementation was intentionally not copied here; instead the
- * feature will be ported incrementally and mapped to Meteor Client APIs.
- */
-public class AutoLibrarian extends Module {
-	private final SettingGroup sg = settings.getDefaultGroup();
-
-	private final BoolSetting lockInTrade = sg.add(new BoolSetting.Builder()
-		.name("lock-in-trade")
-		.description("Automatically buy an item to lock in a villager's trade when found.")
-		.defaultValue(false)
-		.build());
-
-	private final IntSetting range = sg.add(new IntSetting.Builder()
-		.name("range")
-		.description("Search range for villagers (blocks).")
-		.defaultValue(5)
-		.min(1)
-		.max(64)
-		.build());
-
-	private final IntSetting repairThreshold = sg.add(new IntSetting.Builder()
-		.name("repair-threshold")
-		.description("Don't use tools below this durability when performing actions.")
-		.defaultValue(1)
-		.min(0)
-		.max(100)
-		.build());
-
-	public AutoLibrarian() {
-		super(AddonTemplate.CATEGORY, "auto-librarian", "(Skeleton) Train villagers to become librarians.");
-	}
-
-	@Override
-	public void onActivate() {
-		info("AutoLibrarian enabled (skeleton port)");
-	}
-
-	@Override
-	public void onDeactivate() {
-		info("AutoLibrarian disabled");
-	}
-
-	@EventHandler
-	private void onTick(TickEvent.Pre event) {
-		// Placeholder: implement full port logic here.
-		if (mc.player == null || mc.world == null) return;
-	}
-}
-package com.example.addon.modules;
-
-import meteordevelopment.meteorclient.systems.modules.Module;
-import meteordevelopment.meteorclient.settings.SettingGroup;
-import meteordevelopment.meteorclient.settings.BoolSetting;
-import meteordevelopment.meteorclient.settings.IntSetting;
-import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.orbit.EventHandler;
-import com.example.addon.AddonTemplate;
-
-/**
- * AutoLibrarian (partial port)
- *
- * This is an initial port/skeleton of the WurstClient AutoLibrarian hack
- * adapted to Meteor Client's module structure. It provides settings and a
- * basic tick handler as a starting point for completing the full feature.
- */
-public class AutoLibrarian extends Module {
-	private final SettingGroup sg = settings.getDefaultGroup();
-
-	private final BoolSetting lockInTrade = sg.add(new BoolSetting.Builder()
-		.name("lock-in-trade")
-		.description("Automatically buy an item to lock in a villager's trade when found.")
-		.defaultValue(false)
-		.build());
-
-	private final IntSetting range = sg.add(new IntSetting.Builder()
-		.name("range")
-		.description("Search range for villagers (blocks).")
-		.defaultValue(5)
-		.min(1)
-		.max(64)
-		.build());
-
-	private final IntSetting repairThreshold = sg.add(new IntSetting.Builder()
-		.name("repair-threshold")
-		.description("Don't use tools below this durability when performing actions.")
-		.defaultValue(1)
-		.min(0)
-		.max(100)
-		.build());
-
-	public AutoLibrarian() {
-		super(AddonTemplate.CATEGORY, "auto-librarian", "(Skeleton) Train villagers to become librarians.");
-	}
-
-	@Override
-	public void onActivate() {
-		info("AutoLibrarian enabled (skeleton port)");
-	}
-
-	@Override
-	public void onDeactivate() {
-		info("AutoLibrarian disabled");
-	}
-
-	@EventHandler
-	private void onTick(TickEvent.Pre event) {
-		// This is a lightweight placeholder. A full port would:
-		// - Find nearby villagers of profession LIBRARIAN/level 1
-		// - Place/break lecterns to retrain villagers
-		// - Open trade screen and inspect offers
-		// - Optionally buy to lock in trade
-		// Implementing the above requires a detailed mapping of Wurst's code
-		// to Meteor Client's API and the target Minecraft mappings.
-
-		// For now, we keep a simple heartbeat so the module compiles and can be
-		// iteratively extended.
-		if (mc.player == null || mc.world == null) return;
-
-		// Example: log every few seconds (quiet by default)
-		// Real villager handling to be implemented in follow-up changes.
-	}
-}
-/*
- * Copyright (c) 2014-2025 Wurst-Imperium and contributors.
- *
- * This source code is subject to the terms of the GNU General Public
- * License, version 3. If a copy of the GPL was not distributed with this
- * file, You can obtain one at: https://www.gnu.org/licenses/gpl-3.0.txt
- */
-package net.wurstclient.hacks;
-
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap.Entry;
-import net.minecraft.client.gui.screens.inventory.MerchantScreen;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.player.LocalPlayer;
+import meteordevelopment.meteorclient.events.render.Render3DEvent;
+import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.renderer.ShapeMode;
+import meteordevelopment.meteorclient.settings.*;
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.utils.player.ChatUtils;
+import meteordevelopment.meteorclient.utils.player.FindItemResult;
+import meteordevelopment.meteorclient.utils.player.InvUtils;
+import meteordevelopment.meteorclient.utils.player.Rotations;
+import meteordevelopment.meteorclient.utils.render.color.SettingColor;
+import meteordevelopment.meteorclient.utils.world.BlockUtils;
+import meteordevelopment.orbit.EventHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSelectTradePacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.npc.villager.Villager;
-import net.minecraft.world.entity.npc.villager.VillagerProfession;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -173,493 +34,425 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.wurstclient.Category;
-import net.wurstclient.SearchTags;
-import net.wurstclient.events.RenderListener;
-import net.wurstclient.events.UpdateListener;
-import net.wurstclient.hack.Hack;
-import net.wurstclient.hacks.autolibrarian.BookOffer;
-import net.wurstclient.hacks.autolibrarian.UpdateBooksSetting;
-import net.wurstclient.mixinterface.IKeyBinding;
-import net.wurstclient.settings.BookOffersSetting;
-import net.wurstclient.settings.CheckboxSetting;
-import net.wurstclient.settings.FaceTargetSetting;
-import net.wurstclient.settings.FaceTargetSetting.FaceTarget;
-import net.wurstclient.settings.SliderSetting;
-import net.wurstclient.settings.SliderSetting.ValueDisplay;
-import net.wurstclient.settings.SwingHandSetting;
-import net.wurstclient.settings.SwingHandSetting.SwingHand;
-import net.wurstclient.util.*;
-import net.wurstclient.util.BlockBreaker.BlockBreakingParams;
-import net.wurstclient.util.BlockPlacer.BlockPlacingParams;
 
-@SearchTags({"auto librarian", "AutoVillager", "auto villager",
-	"VillagerTrainer", "villager trainer", "LibrarianTrainer",
-	"librarian trainer", "AutoHmmm", "auto hmmm"})
-public final class AutoLibrarianHack extends Hack
-	implements UpdateListener, RenderListener
-{
-	private final BookOffersSetting wantedBooks = new BookOffersSetting(
-		"Wanted books",
-		"A list of enchanted books that you want your villagers to sell.\n\n"
-			+ "AutoLibrarian will stop training the current villager"
-			+ " once it has learned to sell one of these books.\n\n"
-			+ "You can also set a maximum price for each book, in case you"
-			+ " already have a villager selling it but you want it for a"
-			+ " cheaper price.",
-		"minecraft:depth_strider;3", "minecraft:efficiency;5",
-		"minecraft:feather_falling;4", "minecraft:fortune;3",
-		"minecraft:looting;3", "minecraft:mending;1", "minecraft:protection;4",
-		"minecraft:respiration;3", "minecraft:sharpness;5",
-		"minecraft:silk_touch;1", "minecraft:unbreaking;3");
-	
-	private final CheckboxSetting lockInTrade = new CheckboxSetting(
-		"Lock in trade",
-		"Automatically buys something from the villager once it has learned to"
-			+ " sell the book you want. This prevents the villager from"
-			+ " changing its trade offers later.\n\n"
-			+ "Make sure you have at least 24 paper and 9 emeralds in your"
-			+ " inventory when using this feature. Alternatively, 1 book and"
-			+ " 64 emeralds will also work.",
-		false);
-	
-	private final UpdateBooksSetting updateBooks = new UpdateBooksSetting();
-	
-	private final SliderSetting range =
-		new SliderSetting("Range", 5, 1, 6, 0.05, ValueDisplay.DECIMAL);
-	
-	private final FaceTargetSetting faceTarget =
-		FaceTargetSetting.withoutPacketSpam(this, FaceTarget.SERVER);
-	
-	private final SwingHandSetting swingHand =
-		new SwingHandSetting(this, SwingHand.SERVER);
-	
-	private final SliderSetting repairMode = new SliderSetting("Repair mode",
-		"Prevents AutoLibrarian from using your axe when its durability reaches"
-			+ " the given threshold, so you can repair it before it breaks.\n"
-			+ "Can be adjusted from 0 (off) to 100 remaining uses.",
-		1, 0, 100, 1, ValueDisplay.INTEGER.withLabel(0, "off"));
-	
-	private final OverlayRenderer overlay = new OverlayRenderer();
-	private final HashSet<Villager> experiencedVillagers = new HashSet<>();
-	
-	private Villager villager;
-	private BlockPos jobSite;
-	
-	private boolean placingJobSite;
-	private boolean breakingJobSite;
-	
-	public AutoLibrarianHack()
-	{
-		super("AutoLibrarian");
-		setCategory(Category.OTHER);
-		addSetting(wantedBooks);
-		addSetting(lockInTrade);
-		addSetting(updateBooks);
-		addSetting(range);
-		addSetting(faceTarget);
-		addSetting(swingHand);
-		addSetting(repairMode);
-	}
-	
-	@Override
-	protected void onEnable()
-	{
-		EVENTS.add(UpdateListener.class, this);
-		EVENTS.add(RenderListener.class, this);
-	}
-	
-	@Override
-	protected void onDisable()
-	{
-		EVENTS.remove(UpdateListener.class, this);
-		EVENTS.remove(RenderListener.class, this);
-		
-		if(breakingJobSite)
-		{
-			MC.gameMode.isDestroying = true;
-			MC.gameMode.stopDestroyBlock();
-			breakingJobSite = false;
-		}
-		
-		overlay.resetProgress();
-		villager = null;
-		jobSite = null;
-		placingJobSite = false;
-		breakingJobSite = false;
-		experiencedVillagers.clear();
-	}
-	
-	@Override
-	public void onUpdate()
-	{
-		if(villager == null)
-		{
-			setTargetVillager();
-			return;
-		}
-		
-		if(jobSite == null)
-		{
-			setTargetJobSite();
-			return;
-		}
-		
-		if(placingJobSite && breakingJobSite)
-			throw new IllegalStateException(
-				"Trying to place and break job site at the same time. Something is wrong.");
-		
-		if(placingJobSite)
-		{
-			placeJobSite();
-			return;
-		}
-		
-		if(breakingJobSite)
-		{
-			breakJobSite();
-			return;
-		}
-		
-		if(!(MC.screen instanceof MerchantScreen tradeScreen))
-		{
-			openTradeScreen();
-			return;
-		}
-		
-		// Can't see experience until the trade screen is open, so we have to
-		// check it here and start over if the villager is already experienced.
-		int experience = tradeScreen.getMenu().getTraderXp();
-		if(experience > 0)
-		{
-			ChatUtils.warning("Villager at "
-				+ villager.blockPosition().toShortString()
-				+ " is already experienced, meaning it can't be trained anymore.");
-			ChatUtils.message("Looking for another villager...");
-			experiencedVillagers.add(villager);
-			villager = null;
-			jobSite = null;
-			closeTradeScreen();
-			return;
-		}
-		
-		// check which book the villager is selling
-		BookOffer bookOffer =
-			findEnchantedBookOffer(tradeScreen.getMenu().getOffers());
-		
-		if(bookOffer == null)
-		{
-			ChatUtils.message("Villager is not selling an enchanted book.");
-			closeTradeScreen();
-			breakingJobSite = true;
-			System.out.println("Breaking job site...");
-			return;
-		}
-		
-		ChatUtils.message(
-			"Villager is selling " + bookOffer.getEnchantmentNameWithLevel()
-				+ " for " + bookOffer.getFormattedPrice() + ".");
-		
-		// if wrong enchantment, break job site and start over
-		if(!wantedBooks.isWanted(bookOffer))
-		{
-			breakingJobSite = true;
-			System.out.println("Breaking job site...");
-			closeTradeScreen();
-			return;
-		}
-		
-		// lock in the trade, if enabled
-		if(lockInTrade.isChecked())
-		{
-			// select the first valid trade
-			tradeScreen.getMenu().setSelectionHint(0);
-			tradeScreen.getMenu().tryMoveItems(0);
-			MC.getConnection().send(new ServerboundSelectTradePacket(0));
-			
-			// buy whatever the villager is selling
-			MC.gameMode.handleInventoryMouseClick(
-				tradeScreen.getMenu().containerId, 2, 0, ClickType.PICKUP,
-				MC.player);
-			
-			// close the trade screen
-			closeTradeScreen();
-		}
-		
-		// update wanted books based on the user's settings
-		updateBooks.getSelected().update(wantedBooks, bookOffer);
-		
-		ChatUtils.message("Done!");
-		setEnabled(false);
-	}
-	
-	private void breakJobSite()
-	{
-		if(jobSite == null)
-			throw new IllegalStateException("Job site is null.");
-		
-		BlockBreakingParams params =
-			BlockBreaker.getBlockBreakingParams(jobSite);
-		
-		if(params == null || BlockUtils.getState(jobSite).canBeReplaced())
-		{
-			System.out.println("Job site has been broken. Replacing...");
-			breakingJobSite = false;
-			placingJobSite = true;
-			return;
-		}
-		
-		// equip tool
-		WURST.getHax().autoToolHack.equipBestTool(jobSite, false, true,
-			repairMode.getValueI());
-		
-		// face block
-		faceTarget.face(params.hitVec());
-		
-		// damage block and swing hand
-		if(MC.gameMode.continueDestroyBlock(jobSite, params.side()))
-			swingHand.swing(InteractionHand.MAIN_HAND);
-		
-		// update progress
-		overlay.updateProgress();
-	}
-	
-	private void placeJobSite()
-	{
-		if(jobSite == null)
-			throw new IllegalStateException("Job site is null.");
-		
-		if(!BlockUtils.getState(jobSite).canBeReplaced())
-		{
-			if(BlockUtils.getBlock(jobSite) == Blocks.LECTERN)
-			{
-				System.out.println("Job site has been placed.");
-				placingJobSite = false;
-				
-			}else
-			{
-				System.out
-					.println("Found wrong block at job site. Breaking...");
-				breakingJobSite = true;
-				placingJobSite = false;
-			}
-			
-			return;
-		}
-		
-		// check if holding a lectern
-		if(!MC.player.isHolding(Items.LECTERN))
-		{
-			InventoryUtils.selectItem(Items.LECTERN, 36);
-			return;
-		}
-		
-		// get the hand that is holding the lectern
-		InteractionHand hand = MC.player.getMainHandItem().is(Items.LECTERN)
-			? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-		
-		// sneak-place to avoid activating trapdoors/chests/etc.
-		IKeyBinding sneakKey = IKeyBinding.get(MC.options.keyShift);
-		sneakKey.setDown(true);
-		if(!MC.player.isShiftKeyDown())
-			return;
-		
-		// get block placing params
-		BlockPlacingParams params = BlockPlacer.getBlockPlacingParams(jobSite);
-		if(params == null)
-		{
-			sneakKey.resetPressedState();
-			return;
-		}
-		
-		// face block
-		faceTarget.face(params.hitVec());
-		
-		// place block
-		InteractionResult result =
-			MC.gameMode.useItemOn(MC.player, hand, params.toHitResult());
-		
-		// swing hand
-		if(result instanceof InteractionResult.Success success
-			&& success.swingSource() == InteractionResult.SwingSource.CLIENT)
-			swingHand.swing(hand);
-		
-		// reset sneak
-		sneakKey.resetPressedState();
-	}
-	
-	private void openTradeScreen()
-	{
-		if(MC.rightClickDelay > 0)
-			return;
-		
-		MultiPlayerGameMode im = MC.gameMode;
-		LocalPlayer player = MC.player;
-		
-		if(player.distanceToSqr(villager) > range.getValueSq())
-		{
-			ChatUtils.error("Villager is out of range. Consider trapping"
-				+ " the villager so it doesn't wander away.");
-			setEnabled(false);
-			return;
-		}
-		
-		// create realistic hit result
-		AABB box = villager.getBoundingBox();
-		Vec3 start = RotationUtils.getEyesPos();
-		Vec3 end = box.getCenter();
-		Vec3 hitVec = box.clip(start, end).orElse(start);
-		EntityHitResult hitResult = new EntityHitResult(villager, hitVec);
-		
-		// face end vector
-		faceTarget.face(end);
-		
-		// click on villager
-		InteractionHand hand = InteractionHand.MAIN_HAND;
-		InteractionResult actionResult =
-			im.interactAt(player, villager, hitResult, hand);
-		
-		if(!actionResult.consumesAction())
-			im.interact(player, villager, hand);
-		
-		// swing hand
-		if(actionResult instanceof InteractionResult.Success success
-			&& success.swingSource() == InteractionResult.SwingSource.CLIENT)
-			swingHand.swing(hand);
-		
-		// set cooldown
-		MC.rightClickDelay = 4;
-	}
-	
-	private void closeTradeScreen()
-	{
-		MC.player.closeContainer();
-		MC.rightClickDelay = 4;
-	}
-	
-	private BookOffer findEnchantedBookOffer(MerchantOffers tradeOffers)
-	{
-		for(MerchantOffer tradeOffer : tradeOffers)
-		{
-			ItemStack stack = tradeOffer.getResult();
-			if(stack.getItem() != Items.ENCHANTED_BOOK)
-				continue;
-			
-			Set<Entry<Holder<Enchantment>>> enchantmentLevelMap =
-				EnchantmentHelper.getEnchantmentsForCrafting(stack).entrySet();
-			if(enchantmentLevelMap.isEmpty())
-				continue;
-			
-			Object2IntMap.Entry<Holder<Enchantment>> firstEntry =
-				enchantmentLevelMap.stream().findFirst().orElseThrow();
-			
-			String enchantment = firstEntry.getKey().getRegisteredName();
-			int level = firstEntry.getIntValue();
-			int price = tradeOffer.getCostA().getCount();
-			BookOffer bookOffer = new BookOffer(enchantment, level, price);
-			
-			if(!bookOffer.isFullyValid())
-			{
-				System.out.println("Found invalid enchanted book offer.\n"
-					+ "Component data: " + enchantmentLevelMap);
-				continue;
-			}
-			
-			return bookOffer;
-		}
-		
-		return null;
-	}
-	
-	private void setTargetVillager()
-	{
-		LocalPlayer player = MC.player;
-		double rangeSq = range.getValueSq();
-		
-		Stream<Villager> stream = StreamSupport
-			.stream(MC.level.entitiesForRendering().spliterator(), true)
-			.filter(e -> !e.isRemoved()).filter(Villager.class::isInstance)
-			.map(e -> (Villager)e).filter(e -> e.getHealth() > 0)
-			.filter(e -> player.distanceToSqr(e) <= rangeSq)
-			.filter(e -> e.getVillagerData().profession().unwrapKey()
-				.orElse(null) == VillagerProfession.LIBRARIAN)
-			.filter(e -> e.getVillagerData().level() == 1)
-			.filter(e -> !experiencedVillagers.contains(e));
-		
-		villager =
-			stream.min(Comparator.comparingDouble(e -> player.distanceToSqr(e)))
-				.orElse(null);
-		
-		if(villager == null)
-		{
-			String errorMsg = "Couldn't find a nearby librarian.";
-			int numExperienced = experiencedVillagers.size();
-			if(numExperienced > 0)
-				errorMsg += " (Except for " + numExperienced + " that "
-					+ (numExperienced == 1 ? "is" : "are")
-					+ " already experienced.)";
-			
-			ChatUtils.error(errorMsg);
-			ChatUtils.message("Make sure both the librarian and the lectern"
-				+ " are reachable from where you are standing.");
-			setEnabled(false);
-			return;
-		}
-		
-		System.out.println("Found villager at " + villager.blockPosition());
-	}
-	
-	private void setTargetJobSite()
-	{
-		Vec3 eyesVec = RotationUtils.getEyesPos();
-		double rangeSq = range.getValueSq();
-		
-		Stream<BlockPos> stream = BlockUtils
-			.getAllInBoxStream(BlockPos.containing(eyesVec),
-				range.getValueCeil())
-			.filter(
-				pos -> eyesVec.distanceToSqr(Vec3.atCenterOf(pos)) <= rangeSq)
-			.filter(pos -> BlockUtils.getBlock(pos) == Blocks.LECTERN);
-		
-		jobSite = stream
-			.min(Comparator.comparingDouble(
-				pos -> villager.distanceToSqr(Vec3.atCenterOf(pos))))
-			.orElse(null);
-		
-		if(jobSite == null)
-		{
-			ChatUtils.error("Couldn't find the librarian's lectern.");
-			ChatUtils.message("Make sure both the librarian and the lectern"
-				+ " are reachable from where you are standing.");
-			setEnabled(false);
-			return;
-		}
-		
-		System.out.println("Found lectern at " + jobSite);
-	}
-	
-	@Override
-	public void onRender(PoseStack matrixStack, float partialTicks)
-	{
-		int green = 0xC000FF00;
-		int red = 0xC0FF0000;
-		
-		if(villager != null)
-			RenderUtils.drawOutlinedBox(matrixStack, villager.getBoundingBox(),
-				green, false);
-		
-		if(jobSite != null)
-			RenderUtils.drawOutlinedBox(matrixStack, new AABB(jobSite), green,
-				false);
-		
-		List<AABB> expVilBoxes = experiencedVillagers.stream()
-			.map(Villager::getBoundingBox).toList();
-		RenderUtils.drawOutlinedBoxes(matrixStack, expVilBoxes, red, false);
-		RenderUtils.drawCrossBoxes(matrixStack, expVilBoxes, red, false);
-		
-		if(breakingJobSite)
-			overlay.render(matrixStack, partialTicks, jobSite);
-	}
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+public class AutoLibrarian extends Module {
+    private final SettingGroup sgGeneral = settings.getDefaultGroup();
+    private final SettingGroup sgRender = settings.createGroup("Render");
+
+    // General Settings
+    private final Setting<List<String>> wantedBooks = sgGeneral.add(new StringListSetting.Builder()
+        .name("wanted-books")
+        .description("List of books to look for. Format: 'enchantment_id;level;max_price'")
+        .defaultValue(Arrays.asList(
+            "minecraft:mending;1;64",
+            "minecraft:unbreaking;3;64",
+            "minecraft:protection;4;64",
+            "minecraft:sharpness;5;64"
+        ))
+        .build()
+    );
+
+    private final Setting<Boolean> lockInTrade = sgGeneral.add(new BoolSetting.Builder()
+        .name("lock-in-trade")
+        .description("Automatically buys the book to lock the trade.")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<UpdateMode> updateMode = sgGeneral.add(new EnumSetting.Builder<UpdateMode>()
+        .name("update-mode")
+        .description("What to do after finding a wanted book.")
+        .defaultValue(UpdateMode.Remove)
+        .build()
+    );
+
+    private final Setting<Double> range = sgGeneral.add(new DoubleSetting.Builder()
+        .name("range")
+        .description("Interaction range.")
+        .defaultValue(5.0)
+        .min(1)
+        .sliderMax(6)
+        .build()
+    );
+    
+    // Render Settings
+    private final Setting<SettingColor> renderColor = sgRender.add(new ColorSetting.Builder()
+        .name("render-color")
+        .description("Color for rendering the target villager and block.")
+        .defaultValue(new SettingColor(0, 255, 0, 100))
+        .build()
+    );
+
+    public enum UpdateMode {
+        None,
+        Remove,
+        ToggleOff
+    }
+
+    private Villager villager;
+    private BlockPos jobSite;
+    private boolean placingJobSite;
+    private boolean breakingJobSite;
+    private final Set<Integer> experiencedVillagerIds = new HashSet<>();
+    private int timer = 0;
+
+    public AutoLibrarian() {
+        super(AddonTemplate.CATEGORY, "auto-librarian", "Automatically rolls villager trades for desired enchanted books.");
+    }
+
+    @Override
+    public void onDeactivate() {
+        villager = null;
+        jobSite = null;
+        placingJobSite = false;
+        breakingJobSite = false;
+        experiencedVillagerIds.clear();
+        if (mc.interactionManager != null) {
+            mc.interactionManager.cancelBlockBreaking();
+        }
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Pre event) {
+        if (timer > 0) {
+            timer--;
+            // Simple delay handling
+        }
+
+        if (villager == null) {
+            setTargetVillager();
+            return;
+        }
+
+        if (villager.isRemoved() || villager.getHealth() <= 0 || mc.player.distanceToSqr(villager) > range.get() * range.get()) {
+            villager = null;
+            return;
+        }
+
+        if (jobSite == null) {
+            setTargetJobSite();
+            return;
+        }
+        
+        // Ensure job site is still a lectern or air (if we are placing)
+        if (!placingJobSite && BlockUtils.getBlock(jobSite) != Blocks.LECTERN && BlockUtils.getBlock(jobSite) != Blocks.AIR) {
+             // If it's not a lectern and not air, we might have lost track or it changed?
+             // Re-evaluate
+             setTargetJobSite();
+             return;
+        }
+
+        if (placingJobSite) {
+            placeJobSite();
+            return;
+        }
+
+        if (breakingJobSite) {
+            breakJobSite();
+            return;
+        }
+
+        // Interaction logic
+        if (!(mc.currentScreen instanceof MerchantMenu)) { // Note: MerchantScreen in yarn, but we check generic screen type or specific
+            // Check if we are in a MerchantScreen (container)
+             if (mc.player.containerMenu instanceof MerchantMenu) {
+                 // Already open?
+                 handleTrade();
+             } else {
+                 // Open trade
+                 openTradeScreen();
+             }
+        } else {
+            handleTrade();
+        }
+    }
+
+    // Since mc.currentScreen is the GUI, and mc.player.currentScreenHandler is the container logic.
+    // In Meteor/Fabric: mc.currentScreen is Screen. 
+    // We should check if mc.currentScreen is instance of MerchantScreen.
+    // However, we can also check mc.player.currentScreenHandler which is the menu.
+
+    private void handleTrade() {
+        // Wait a bit if we just opened it?
+        if (mc.player.containerMenu instanceof MerchantMenu menu) {
+             // Check XP
+             if (menu.getTraderXp() > 0 && menu.getTraderLevel() > 1) { 
+                 // Level > 1 usually means experienced, but getTraderXp > 0 is stricter for Novice with XP.
+                 // Actually, a novice has 0 XP. If > 0, they traded.
+                 ChatUtils.warning("Villager is already experienced!");
+                 experiencedVillagerIds.add(villager.getId());
+                 villager = null;
+                 jobSite = null;
+                 mc.player.closeContainer();
+                 return;
+             }
+
+             MerchantOffers offers = menu.getOffers();
+             if (offers.isEmpty()) return; // Wait for offers
+
+             BookOffer offer = findEnchantedBookOffer(offers);
+             if (offer == null) {
+                 // No book, reroll
+                 reroll();
+                 return;
+             }
+             
+             ChatUtils.info("Found book: " + offer.name + " " + offer.level + " for " + offer.price + " emeralds.");
+
+             if (isWanted(offer)) {
+                 // Lock in?
+                 if (lockInTrade.get()) {
+                     lockTradeAndFinish(menu, offer);
+                 } else {
+                     ChatUtils.info("Trade found! Stopping.");
+                     updateWantedList(offer);
+                     toggle();
+                 }
+             } else {
+                 reroll();
+             }
+        }
+    }
+    
+    private void reroll() {
+        mc.player.closeContainer();
+        breakingJobSite = true;
+    }
+
+    private void lockTradeAndFinish(MerchantMenu menu, BookOffer offer) {
+        // Find the index of the trade (assumed 0 or find it)
+        // Usually the book trade is one of the first two.
+        int tradeIndex = -1;
+        for (int i = 0; i < menu.getOffers().size(); i++) {
+             MerchantOffer trade = menu.getOffers().get(i);
+             if (ItemStack.matches(trade.getResult(), offer.stack)) {
+                 tradeIndex = i;
+                 break;
+             }
+        }
+        
+        if (tradeIndex == -1) {
+            // Should not happen if offer came from offers
+            tradeIndex = 0; 
+        }
+
+        // Select trade
+        if (mc.getNetworkHandler() != null)
+             mc.getNetworkHandler().sendPacket(new ServerboundSelectTradePacket(tradeIndex));
+        
+        // Move items? or just click output?
+        // Simple way: Click output slot (2)
+        // Ensure we have ingredients? logic assumes user has them as per original Wurst code
+        
+        // Slot 2 is result
+        InvUtils.click().slotId(2); 
+        
+        ChatUtils.info("Locked in trade!");
+        updateWantedList(offer);
+        toggle();
+    }
+    
+    private void updateWantedList(BookOffer offer) {
+        if (updateMode.get() == UpdateMode.Remove) {
+            List<String> current = new ArrayList<>(wantedBooks.get());
+             // Remove the one that matched
+             // We need to parse and match again or pass the string
+             // Simplest: remove exact match or loosely match
+             current.removeIf(s -> {
+                 BookOffer wanted = BookOffer.parse(s);
+                 return wanted != null && wanted.matches(offer);
+             });
+             wantedBooks.set(current);
+        } else if (updateMode.get() == UpdateMode.ToggleOff) {
+            toggle();
+        }
+    }
+
+    private void openTradeScreen() {
+        if (timer > 0) return;
+        
+        Rotations.rotate(Rotations.getYaw(villager), Rotations.getPitch(villager));
+        mc.interactionManager.interactEntity(mc.player, villager, InteractionHand.MAIN_HAND);
+        timer = 10;
+    }
+
+    private void breakJobSite() {
+        if (jobSite == null) {
+            breakingJobSite = false;
+            return;
+        }
+        
+        if (BlockUtils.getBlock(jobSite) == Blocks.AIR) {
+            breakingJobSite = false;
+            placingJobSite = true;
+            timer = 5; // Delay before place
+            return;
+        }
+
+        // Need an axe?
+        FindItemResult axe = InvUtils.find(item -> item.getItem() instanceof net.minecraft.world.item.AxeItem);
+        if (!axe.found()) {
+            // fallback
+        } else {
+            // InvUtils.swap(axe.slot(), true); // Swap to axe (silent? Wurst does equipBestTool)
+            // We can just use interactionManager default breaking which swaps automatically if configured or we swap explicitly
+        }
+        
+        Rotations.rotate(Rotations.getYaw(jobSite), Rotations.getPitch(jobSite)); // Look at block
+        BlockUtils.breakBlock(jobSite, true); // true = swing
+    }
+
+    private void placeJobSite() {
+        if (jobSite == null) {
+            placingJobSite = false;
+            return;
+        }
+
+        if (BlockUtils.getBlock(jobSite) == Blocks.LECTERN) {
+            placingJobSite = false;
+            return;
+        }
+        
+        if (timer > 0) return;
+
+        FindItemResult lectern = InvUtils.find(Items.LECTERN);
+        if (!lectern.found()) {
+            ChatUtils.error("No Lectern found in hotbar!");
+            toggle();
+            return;
+        }
+
+        BlockUtils.place(jobSite, lectern, true, 50, true, true);
+        placingJobSite = false;
+        timer = 5; // Delay after place
+    }
+
+    private void setTargetVillager() {
+        double rangeSq = range.get() * range.get();
+        
+        Stream<Entity> stream = StreamSupport.stream(mc.world.getEntities().spliterator(), false)
+            .filter(e -> e instanceof Villager)
+            .filter(e -> !e.isRemoved())
+            .filter(e -> ((Villager)e).getHealth() > 0)
+            .filter(e -> mc.player.distanceToSqr(e) <= rangeSq);
+
+        villager = (Villager) stream
+            .map(e -> (Villager)e)
+            .filter(v -> v.getVillagerData().getProfession() == VillagerProfession.LIBRARIAN)
+            .filter(v -> v.getVillagerData().getLevel() == 1) // Novice
+            .filter(v -> !experiencedVillagerIds.contains(v.getId()))
+            .min(Comparator.comparingDouble(e -> mc.player.distanceToSqr(e)))
+            .orElse(null);
+            
+        if (villager != null) {
+            ChatUtils.info("Found villager at " + villager.blockPosition());
+        }
+    }
+
+    private void setTargetJobSite() {
+        if (villager == null) return;
+        
+        // Identify the lectern the villager is bound to, or the nearest lectern
+        // Logic: Scan nearby lecterns.
+        // Wurst logic: all lecterns in range, min dist to villager.
+        
+        List<BlockPos> potSpots = BlockUtils.getAllInBox(
+                BlockPos.containing(mc.player.getEyePosition()).offset((int)-range.get(), (int)-range.get(), (int)-range.get()),
+                BlockPos.containing(mc.player.getEyePosition()).offset((int)range.get(), (int)range.get(), (int)range.get())
+        );
+        
+        jobSite = potSpots.stream()
+            .filter(pos -> BlockUtils.getBlock(pos) == Blocks.LECTERN)
+            .min(Comparator.comparingDouble(pos -> villager.distanceToSqr(Vec3.atCenterOf(pos))))
+            .orElse(null);
+            
+        if (jobSite != null) {
+            ChatUtils.info("Found lectern at " + jobSite);
+        }
+    }
+    
+    @EventHandler
+    private void onRender(Render3DEvent event) {
+        if (villager != null) {
+            event.renderer.box(villager.getBoundingBox(), renderColor.get(), renderColor.get(), ShapeMode.Lines, 0);
+        }
+        if (jobSite != null) {
+             event.renderer.box(jobSite, renderColor.get(), renderColor.get(), ShapeMode.Lines, 0);
+        }
+    }
+    
+    // --- Helpers ---
+    private boolean isWanted(BookOffer offer) {
+        for (String s : wantedBooks.get()) {
+            BookOffer wanted = BookOffer.parse(s);
+            if (wanted != null && wanted.matches(offer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private BookOffer findEnchantedBookOffer(MerchantOffers offers) {
+        for (MerchantOffer offer : offers) {
+            ItemStack result = offer.getResult();
+            if (result.getItem() == Items.ENCHANTED_BOOK) {
+                // Get Enchantments
+                Map<Holder<Enchantment>, Integer> enchants = EnchantmentHelper.getEnchantmentsForCrafting(result);
+                // Usually only one
+                if (!enchants.isEmpty()) {
+                    Map.Entry<Holder<Enchantment>, Integer> entry = enchants.entrySet().iterator().next();
+                    // Component logic in newer versions might differ slightly, but this is standard 1.20+
+                    // We need the string ID? or just compare Holder?
+                    // Wrapper for comparison.
+                    String id = entry.getKey().unwrapKey().map(k -> k.location().toString()).orElse("");
+                    return new BookOffer(id, entry.getValue(), offer.getCostA().getCount(), result);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static class BookOffer {
+        String id;
+        int level;
+        int price;
+        ItemStack stack;
+        String name;
+
+        public BookOffer(String id, int level, int price, ItemStack stack) {
+            this.id = id;
+            this.level = level;
+            this.price = price;
+            this.stack = stack;
+             // Try to get name
+             this.name = id; // Fallback
+             // If we can get a readable name?
+             // Component n = stack.getHoverName();
+        }
+
+        public static BookOffer parse(String s) {
+            try {
+                String[] parts = s.split(";");
+                if (parts.length >= 2) {
+                    String id = parts[0];
+                    int level = Integer.parseInt(parts[1]);
+                    int maxPrice = parts.length > 2 ? Integer.parseInt(parts[2]) : 64;
+                    BookOffer b = new BookOffer(id, level, maxPrice, null);
+                    return b;
+                }
+            } catch (Exception e) {}
+            return null;
+        }
+        
+        public boolean matches(BookOffer other) {
+            return this.id.equals(other.id) && other.level >= this.level && other.price <= this.price;
+        }
+    }
 }
