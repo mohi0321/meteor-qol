@@ -1,5 +1,6 @@
-package com.example.addon.AddonTemplate;
+package com.example.addon.modules;
 
+import com.example.addon.AddonTemplate;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.events.world.TickEvent;
