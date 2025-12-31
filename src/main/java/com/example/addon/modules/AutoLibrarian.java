@@ -21,7 +21,6 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.MerchantScreenHandler;
 import net.minecraft.util.Hand;
@@ -114,6 +113,8 @@ public class AutoLibrarian extends Module {
 
     @EventHandler
     private void onTick(TickEvent.Pre event) {
+        if (mc.world == null || mc.player == null) return;
+
         if (timer > 0) {
             timer--;
             return;
@@ -135,7 +136,7 @@ public class AutoLibrarian extends Module {
         }
         
         // Ensure job site is still a lectern or air (if we are placing)
-        if (!placingJobSite && BlockUtils.getBlock(jobSite) != Blocks.LECTERN && BlockUtils.getBlock(jobSite) != Blocks.AIR) {
+        if (!placingJobSite && mc.world.getBlockState(jobSite).getBlock() != Blocks.LECTERN && mc.world.getBlockState(jobSite).getBlock() != Blocks.AIR) {
              setTargetJobSite();
              return;
         }
@@ -159,10 +160,6 @@ public class AutoLibrarian extends Module {
 
     private void handleTrade() {
         if (mc.player.currentScreenHandler instanceof MerchantScreenHandler menu) {
-             // In Yarn 1.21.4 for MerchantScreenHandler:
-             // getExperience() -> experience
-             // getLevelProgress() -> leveled? No, tradeOffers usually empty if no trade.
-             // We check experience.
              if (menu.getExperience() > 0 && menu.getLevelProgress() > 1) { 
                  ChatUtils.warning("Villager is already experienced!");
                  experiencedVillagerIds.add(villager.getId());
@@ -249,7 +246,7 @@ public class AutoLibrarian extends Module {
             return;
         }
         
-        if (BlockUtils.getBlock(jobSite) == Blocks.AIR) {
+        if (mc.world.getBlockState(jobSite).getBlock() == Blocks.AIR) {
             breakingJobSite = false;
             placingJobSite = true;
             timer = 10;
@@ -266,7 +263,7 @@ public class AutoLibrarian extends Module {
             return;
         }
 
-        if (BlockUtils.getBlock(jobSite) == Blocks.LECTERN) {
+        if (mc.world.getBlockState(jobSite).getBlock() == Blocks.LECTERN) {
             placingJobSite = false;
             return;
         }
@@ -287,6 +284,7 @@ public class AutoLibrarian extends Module {
 
     private void setTargetVillager() {
         double rangeSq = range.get() * range.get();
+        if (mc.world == null) return;
         
         Stream<Entity> stream = StreamSupport.stream(mc.world.getEntities().spliterator(), false)
             .filter(e -> e instanceof VillagerEntity)
@@ -308,15 +306,15 @@ public class AutoLibrarian extends Module {
     }
 
     private void setTargetJobSite() {
-        if (villager == null) return;
+        if (villager == null || mc.world == null) return;
         
         List<BlockPos> potSpots = BlockUtils.getAllInBox(
-                BlockPos.ofFloored(mc.player.getEyePos()).add((int)-range.get(), (int)-range.get(), (int)-range.get()),
-                BlockPos.ofFloored(mc.player.getEyePos()).add((int)range.get(), (int)range.get(), (int)range.get())
+                BlockPos.ofFloored(mc.player.getEyePos()).add(-range.get().intValue(), -range.get().intValue(), -range.get().intValue()),
+                BlockPos.ofFloored(mc.player.getEyePos()).add(range.get().intValue(), range.get().intValue(), range.get().intValue())
         );
         
         jobSite = potSpots.stream()
-            .filter(pos -> BlockUtils.getBlock(pos) == Blocks.LECTERN)
+            .filter(pos -> mc.world.getBlockState(pos).getBlock() == Blocks.LECTERN)
             .min(Comparator.comparingDouble(pos -> villager.squaredDistanceTo(Vec3d.ofCenter(pos))))
             .orElse(null);
             
@@ -349,29 +347,19 @@ public class AutoLibrarian extends Module {
         for (TradeOffer offer : offers) {
             ItemStack result = offer.getSellItem();
             if (result.getItem() == Items.ENCHANTED_BOOK) {
-                // In 1.21+, EnchantmentHelper operates on components.
-                // We use EnchantmentHelper.getEnchantments(ItemStack) which returns ItemEnchantmentsComponent
-                // or similar.
-                // Actually EnchantmentHelper.getEnchantments(ItemStack) returns ComponentMap in some versions or ItemEnchantments.
-                // In 1.21.4 Yarn: EnchantmentHelper.getEnchantments(ItemStack) -> ItemEnchantmentsComponent
-                
-                var enchants = EnchantmentHelper.getEnchantments(result).getEnchantmentEntries();
+                var enchantsComponent = EnchantmentHelper.getEnchantments(result);
+                Set<RegistryEntry<Enchantment>> enchants = enchantsComponent.getEnchantments();
                 if (enchants.isEmpty()) continue;
                 
-                var entry = enchants.iterator().next();
-                RegistryEntry<Enchantment> key = entry.getKey();
-                int level = entry.getIntValue();
+                RegistryEntry<Enchantment> key = enchants.iterator().next();
+                int level = enchantsComponent.getLevel(key);
                 
-                // Get ID
                 String id = key.getKey().map(k -> k.getValue().toString()).orElse(key.toString());
 
-                // Normalize ID
                 if (!id.contains(":") && !id.contains(".")) {
                     id = "minecraft:" + id;
                 }
                 
-                // 1.21.4 TradeOffer costs: getOriginalFirstBuyItem() or getFirstBuyItem() ?
-                // For training, cost is usually first buy item.
                 return new BookOffer(id, level, offer.getOriginalFirstBuyItem().getCount(), result);
             }
         }
