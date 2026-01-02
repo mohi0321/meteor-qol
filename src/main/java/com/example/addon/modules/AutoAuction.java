@@ -259,8 +259,14 @@ public class AutoAuction extends Module {
             }
 
             case ENTER_PRICE -> {
+                // Wait for sign GUI to appear
+                if (mc.currentScreen == null) {
+                    timer = HALF_SECOND;
+                    return;
+                }
+                
+                // Send the sign packet with price on first line
                 BlockPos pos = mc.player.getBlockPos();
-
                 mc.player.networkHandler.sendPacket(
                     new UpdateSignC2SPacket(
                         pos,
@@ -271,7 +277,8 @@ public class AutoAuction extends Module {
                         ""
                     )
                 );
-                timer = HALF_SECOND;
+                
+                timer = ONE_SECOND;
                 step = Step.CONFIRM_SIGN;
             }
 
