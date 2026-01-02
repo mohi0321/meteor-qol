@@ -108,9 +108,9 @@ public class AutoAuction extends Module {
             }
 
             case FIND_ITEM -> {
-                // String -> Item konvertieren
-                String[] split = item.get().split(":", 2);
-                Item targetItem = Registries.ITEM.get(new Identifier(split[0], split[1]));
+                // String -> Identifier -> Item
+                Identifier id = Identifier.tryParse(item.get());
+                Item targetItem = Registries.ITEM.get(id);
 
                 FindItemResult result = InvUtils.find(targetItem);
 
