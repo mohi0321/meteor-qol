@@ -22,12 +22,23 @@ public class AutoAuction extends Module {
     private final Setting<String> itemSetting = sgGeneral.add(new StringSetting.Builder()
         .name("item")
         .defaultValue("minecraft:enchanted_book")
+        .description("Item ID to auction (e.g., minecraft:diamond)")
         .build()
     );
 
     private final Setting<String> priceSetting = sgGeneral.add(new StringSetting.Builder()
         .name("price")
         .defaultValue("799")
+        .description("Price to sell the item for")
+        .build()
+    );
+
+    private final Setting<Integer> repeatDelaySetting = sgGeneral.add(new IntSetting.Builder()
+        .name("repeat-delay")
+        .description("Delay in seconds before starting the next auction")
+        .defaultValue(10)
+        .min(1)
+        .sliderMax(120)
         .build()
     );
 
@@ -38,13 +49,15 @@ public class AutoAuction extends Module {
         PLACE_ITEM,
         ENTER_PRICE,
         CONFIRM_SIGN,
-        EXIT_MENU
+        EXIT_MENU,
+        WAIT_REPEAT
     }
 
     private Step step;
     private int timer;
     private Item targetItem;
     private String targetPrice;
+    private int repeatDelayTicks;
 
     public AutoAuction() {
         super(Enhanced.CATEGORY, "auto-auction", "Automatically sells items in the auction house.");
@@ -57,6 +70,7 @@ public class AutoAuction extends Module {
 
         targetItem = Registries.ITEM.get(Identifier.tryParse(id));
         targetPrice = priceSetting.get();
+        repeatDelayTicks = repeatDelaySetting.get() * 20;
 
         if (targetItem == Items.AIR) {
             ChatUtils.error("Invalid item ID.");
@@ -73,8 +87,7 @@ public class AutoAuction extends Module {
         if (mc.player == null || mc.world == null) return;
         if (timer-- > 0) return;
 
-        // Immer 1 Sekunde Delay nach jedem Schritt
-        final int ONE_SECOND = 20;
+        final int ONE_SECOND = 20; // 1 Sekunde = 20 Ticks
 
         switch (step) {
 
@@ -85,28 +98,32 @@ public class AutoAuction extends Module {
             }
 
             case PRESS_CREATE -> {
-                mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    53,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
-                );
-                step = Step.PICK_ITEM;
+                if (mc.player.currentScreenHandler != null && mc.player.currentScreenHandler.slots.size() > 53) {
+                    mc.interactionManager.clickSlot(
+                        mc.player.currentScreenHandler.syncId,
+                        53,
+                        0,
+                        SlotActionType.PICKUP,
+                        mc.player
+                    );
+                    step = Step.PICK_ITEM;
+                } else {
+                    timer = ONE_SECOND;
+                    return;
+                }
                 timer = ONE_SECOND;
             }
 
             case PICK_ITEM -> {
-                int slotCount = mc.player.currentScreenHandler.slots.size();
-
-                // Sicherstellen, dass alle Slots existieren
-                if (slotCount <= 89) {
-                    timer = 10; // kurz warten
+                if (mc.player.currentScreenHandler == null || mc.player.currentScreenHandler.slots.size() <= 53) {
+                    timer = ONE_SECOND; // Warten, bis GUI fertig geladen ist
                     return;
                 }
 
                 boolean found = false;
-                for (int i = 54; i <= 89; i++) {
+                int lastSlot = Math.min(89, mc.player.currentScreenHandler.slots.size() - 1);
+
+                for (int i = 54; i <= lastSlot; i++) {
                     ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
                     if (!stack.isEmpty() && stack.getItem() == targetItem) {
                         mc.interactionManager.clickSlot(
@@ -122,7 +139,7 @@ public class AutoAuction extends Module {
                 }
 
                 if (!found) {
-                    ChatUtils.warning("Item nicht zwischen Slot 54–89 gefunden.");
+                    ChatUtils.warning("Item nicht zwischen Slot 54–" + lastSlot + " gefunden.");
                     toggle();
                     return;
                 }
@@ -132,15 +149,19 @@ public class AutoAuction extends Module {
             }
 
             case PLACE_ITEM -> {
-                mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    6,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
-                );
-                step = Step.ENTER_PRICE;
-                timer = ONE_SECOND;
+                if (mc.player.currentScreenHandler != null) {
+                    mc.interactionManager.clickSlot(
+                        mc.player.currentScreenHandler.syncId,
+                        6,
+                        0,
+                        SlotActionType.PICKUP,
+                        mc.player
+                    );
+                    step = Step.ENTER_PRICE;
+                    timer = ONE_SECOND;
+                } else {
+                    timer = ONE_SECOND;
+                }
             }
 
             case ENTER_PRICE -> {
@@ -162,22 +183,32 @@ public class AutoAuction extends Module {
             }
 
             case CONFIRM_SIGN -> {
-                mc.player.closeHandledScreen();
+                if (mc.player.currentScreenHandler != null) {
+                    mc.player.closeHandledScreen();
+                }
                 step = Step.EXIT_MENU;
                 timer = ONE_SECOND;
             }
 
             case EXIT_MENU -> {
-                mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    6,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
-                );
-
+                if (mc.player.currentScreenHandler != null) {
+                    mc.interactionManager.clickSlot(
+                        mc.player.currentScreenHandler.syncId,
+                        6,
+                        0,
+                        SlotActionType.PICKUP,
+                        mc.player
+                    );
+                }
                 ChatUtils.info("Auction created successfully.");
-                toggle();
+                step = Step.WAIT_REPEAT;
+                timer = repeatDelayTicks; // Wartezeit vor nächster Auktion
+            }
+
+            case WAIT_REPEAT -> {
+                // Starte neue Auktion
+                step = Step.OPEN_AH;
+                timer = ONE_SECOND;
             }
         }
     }
