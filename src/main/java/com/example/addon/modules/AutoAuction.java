@@ -87,7 +87,7 @@ public class AutoAuction extends Module {
             case OPEN_AH -> {
                 ChatUtils.sendPlayerMsg("/ah");
                 step = Step.PICK_ITEM;
-                timer = 20; // 1 second
+                timer = 20;
             }
 
             case PICK_ITEM -> {
@@ -113,7 +113,7 @@ public class AutoAuction extends Module {
             case PLACE_ITEM -> {
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
-                    6, // server-specific slot
+                    6,
                     0,
                     SlotActionType.PICKUP,
                     mc.player
@@ -130,7 +130,10 @@ public class AutoAuction extends Module {
                     new UpdateSignC2SPacket(
                         pos,
                         true,
-                        new String[] { targetPrice, "", "", "" }
+                        targetPrice,
+                        "",
+                        "",
+                        ""
                     )
                 );
 
