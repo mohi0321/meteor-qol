@@ -88,6 +88,7 @@ public class AutoAuction extends Module {
         WAIT_SIGN,
         TYPE_PRICE,
         CONFIRM_SIGN,
+        CONFIRM_AUCTION,
         WAIT_REPEAT
     }
 
@@ -322,12 +323,12 @@ public class AutoAuction extends Module {
                     return;
                 }
                 
-                step = Step.WAIT_REPEAT;
+                step = Step.CONFIRM_AUCTION;
                 timer = repeatDelayTicks;
             }
 
             case CONFIRM_AUCTION -> {
-             if(mc.currentScreenHandler != null) {
+             if(mc.currentScreenHandler == null) {
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     auctionSlotSetting.get(),
@@ -336,6 +337,7 @@ public class AutoAuction extends Module {
                     mc.player
                 );
              }
+             step = Step.WAIT_REPEAT;
             }
 
             case WAIT_REPEAT -> {
