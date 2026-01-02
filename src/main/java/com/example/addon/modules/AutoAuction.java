@@ -65,7 +65,7 @@ public class AutoAuction extends Module {
         }
 
         step = Step.OPEN_AH;
-        timer = 0;
+        timer = 20; // 1 Sekunde Delay vor der ersten Interaktion
     }
 
     @EventHandler
@@ -73,12 +73,15 @@ public class AutoAuction extends Module {
         if (mc.player == null || mc.world == null) return;
         if (timer-- > 0) return;
 
+        // Immer 1 Sekunde Delay nach jedem Schritt
+        final int ONE_SECOND = 20;
+
         switch (step) {
 
             case OPEN_AH -> {
                 ChatUtils.sendPlayerMsg("/ah");
                 step = Step.PRESS_CREATE;
-                timer = 20;
+                timer = ONE_SECOND;
             }
 
             case PRESS_CREATE -> {
@@ -90,15 +93,21 @@ public class AutoAuction extends Module {
                     mc.player
                 );
                 step = Step.PICK_ITEM;
-                timer = 20;
+                timer = ONE_SECOND;
             }
 
             case PICK_ITEM -> {
-                boolean found = false;
+                int slotCount = mc.player.currentScreenHandler.slots.size();
 
+                // Sicherstellen, dass alle Slots existieren
+                if (slotCount <= 89) {
+                    timer = 10; // kurz warten
+                    return;
+                }
+
+                boolean found = false;
                 for (int i = 54; i <= 89; i++) {
                     ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
-
                     if (!stack.isEmpty() && stack.getItem() == targetItem) {
                         mc.interactionManager.clickSlot(
                             mc.player.currentScreenHandler.syncId,
@@ -113,13 +122,13 @@ public class AutoAuction extends Module {
                 }
 
                 if (!found) {
-                    ChatUtils.warning("Item NOT found between slot 54 and 89.");
+                    ChatUtils.warning("Item nicht zwischen Slot 54–89 gefunden.");
                     toggle();
                     return;
                 }
 
                 step = Step.PLACE_ITEM;
-                timer = 20;
+                timer = ONE_SECOND;
             }
 
             case PLACE_ITEM -> {
@@ -131,7 +140,7 @@ public class AutoAuction extends Module {
                     mc.player
                 );
                 step = Step.ENTER_PRICE;
-                timer = 20;
+                timer = ONE_SECOND;
             }
 
             case ENTER_PRICE -> {
@@ -149,13 +158,13 @@ public class AutoAuction extends Module {
                 );
 
                 step = Step.CONFIRM_SIGN;
-                timer = 20;
+                timer = ONE_SECOND;
             }
 
             case CONFIRM_SIGN -> {
                 mc.player.closeHandledScreen();
                 step = Step.EXIT_MENU;
-                timer = 20;
+                timer = ONE_SECOND;
             }
 
             case EXIT_MENU -> {
