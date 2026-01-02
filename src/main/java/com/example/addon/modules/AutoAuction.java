@@ -6,6 +6,7 @@ import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.meteorclient.utils.player.InvUtils;
+import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -21,8 +22,8 @@ public class AutoAuction extends Module {
 
     private final Setting<String> itemSetting = sgGeneral.add(new StringSetting.Builder()
         .name("item")
-        .defaultValue("ENCHANTED_BOOK")
-        .description("Item ID to auction capitalized (e.g., ENCHANTED_BOOK)")
+        .defaultValue("minecraft:enchanted_book")
+        .description("Item ID to auction (e.g., minecraft:enchanted_book)")
         .build()
     );
 
@@ -42,14 +43,49 @@ public class AutoAuction extends Module {
         .build()
     );
 
+    private final Setting<Boolean> autoDisableSetting = sgGeneral.add(new BoolSetting.Builder()
+        .name("auto-disable")
+        .description("Automatically disable when item runs out")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<Integer> maxAuctionsSetting = sgGeneral.add(new IntSetting.Builder()
+        .name("max-auctions")
+        .description("Maximum number of auctions to create (0 = unlimited)")
+        .defaultValue(0)
+        .min(0)
+        .sliderMax(100)
+        .build()
+    );
+
+    private final Setting<Integer> createSlotSetting = sgGeneral.add(new IntSetting.Builder()
+        .name("create-button-slot")
+        .description("Slot number of the 'Create Auction' button")
+        .defaultValue(53)
+        .min(0)
+        .sliderMax(53)
+        .build()
+    );
+
+    private final Setting<Integer> auctionSlotSetting = sgGeneral.add(new IntSetting.Builder()
+        .name("auction-item-slot")
+        .description("Slot number where the item should be placed")
+        .defaultValue(6)
+        .min(0)
+        .sliderMax(53)
+        .build()
+    );
+
     private enum Step {
         OPEN_AH,
+        WAIT_MAIN_GUI,
         PRESS_CREATE,
+        WAIT_CREATE_GUI,
         PICK_ITEM,
         PLACE_ITEM,
         ENTER_PRICE,
         CONFIRM_SIGN,
-        EXIT_MENU,
         WAIT_REPEAT
     }
 
@@ -58,6 +94,9 @@ public class AutoAuction extends Module {
     private Item targetItem;
     private String targetPrice;
     private int repeatDelayTicks;
+    private int auctionsCreated;
+    private int retryCount;
+    private static final int MAX_RETRIES = 5;
 
     public AutoAuction() {
         super(Enhanced.CATEGORY, "auto-auction", "Automatically sells items in the auction house.");
@@ -65,21 +104,32 @@ public class AutoAuction extends Module {
 
     @Override
     public void onActivate() {
-        String id = itemSetting.get();
+        String id = itemSetting.get().toLowerCase();
         if (!id.contains(":")) id = "minecraft:" + id;
 
         targetItem = Registries.ITEM.get(Identifier.tryParse(id));
         targetPrice = priceSetting.get();
         repeatDelayTicks = repeatDelaySetting.get() * 20;
+        auctionsCreated = 0;
+        retryCount = 0;
 
         if (targetItem == Items.AIR) {
-            ChatUtils.error("Invalid item ID.");
+            ChatUtils.error("Invalid item ID: " + itemSetting.get());
             toggle();
             return;
         }
 
+        ChatUtils.info("Starting AutoAuction for " + targetItem.getName().getString());
         step = Step.OPEN_AH;
-        timer = 20; // 1 second delay before first action
+        timer = 20;
+    }
+
+    @Override
+    public void onDeactivate() {
+        if (mc.player != null && mc.player.currentScreenHandler != null) {
+            mc.player.closeHandledScreen();
+        }
+        ChatUtils.info("AutoAuction stopped. Created " + auctionsCreated + " auctions.");
     }
 
     @EventHandler
@@ -88,70 +138,123 @@ public class AutoAuction extends Module {
         if (timer-- > 0) return;
 
         final int ONE_SECOND = 20;
+        final int HALF_SECOND = 10;
 
         switch (step) {
 
             case OPEN_AH -> {
                 ChatUtils.sendPlayerMsg("/ah");
-                step = Step.PRESS_CREATE;
+                step = Step.WAIT_MAIN_GUI;
                 timer = ONE_SECOND;
+                retryCount = 0;
+            }
+
+            case WAIT_MAIN_GUI -> {
+                if (mc.player.currentScreenHandler != null && mc.player.currentScreenHandler.slots.size() > createSlotSetting.get()) {
+                    step = Step.PRESS_CREATE;
+                    timer = HALF_SECOND;
+                } else {
+                    if (++retryCount > MAX_RETRIES) {
+                        ChatUtils.error("Failed to open auction house GUI.");
+                        toggle();
+                        return;
+                    }
+                    timer = HALF_SECOND;
+                }
             }
 
             case PRESS_CREATE -> {
-                if (mc.player.currentScreenHandler != null && mc.player.currentScreenHandler.slots.size() > 53) {
-                    mc.interactionManager.clickSlot(
-                        mc.player.currentScreenHandler.syncId,
-                        53,
-                        0,
-                        SlotActionType.PICKUP,
-                        mc.player
-                    );
-                    step = Step.PICK_ITEM;
-                } else {
+                if (mc.player.currentScreenHandler == null) {
+                    step = Step.OPEN_AH;
                     timer = ONE_SECOND;
                     return;
                 }
-                timer = ONE_SECOND;
+
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    createSlotSetting.get(),
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+                step = Step.WAIT_CREATE_GUI;
+                timer = ONE_SECOND * 2;
+                retryCount = 0;
+            }
+
+            case WAIT_CREATE_GUI -> {
+                if (mc.player.currentScreenHandler == null) {
+                    if (++retryCount > MAX_RETRIES) {
+                        ChatUtils.error("Creation GUI failed to open.");
+                        step = Step.OPEN_AH;
+                        timer = ONE_SECOND;
+                    } else {
+                        timer = HALF_SECOND;
+                    }
+                    return;
+                }
+                
+                if (mc.player.currentScreenHandler.slots.size() > 50) {
+                    timer = HALF_SECOND;
+                    return;
+                }
+
+                step = Step.PICK_ITEM;
+                timer = HALF_SECOND;
             }
 
             case PICK_ITEM -> {
-                if (mc.player.currentScreenHandler == null || mc.player.currentScreenHandler.slots.size() <= 53) {
+                if (mc.player.currentScreenHandler == null) {
+                    ChatUtils.error("GUI closed unexpectedly.");
+                    step = Step.OPEN_AH;
                     timer = ONE_SECOND;
                     return;
                 }
 
-                // Inline usage of InvUtils.find to avoid FindItemResult symbol issues
-                int foundSlot = InvUtils.find(targetItem).slot();
+                FindItemResult result = InvUtils.find(targetItem);
                 
-                if (foundSlot == -1) {
-                    ChatUtils.error("Could not find the item in your inventory.");
-                    toggle(); // disable module if item not found
+                if (!result.found()) {
+                    ChatUtils.error("Could not find " + targetItem.getName().getString() + " in inventory.");
+                    if (autoDisableSetting.get()) {
+                        toggle();
+                    } else {
+                        step = Step.WAIT_REPEAT;
+                        timer = repeatDelayTicks;
+                    }
                     return;
                 }
-                ChatUtils.info("Found item in slot: " + foundSlot);
+                
+                int foundSlot = result.slot();
 
-                // Pick up the item
-                InvUtils.swap(foundSlot, false);
-                timer = ONE_SECOND;
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    foundSlot,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+                
+                timer = HALF_SECOND;
                 step = Step.PLACE_ITEM;
             }
 
             case PLACE_ITEM -> {
-                if (mc.player.currentScreenHandler == null || mc.player.currentScreenHandler.slots.size() <= 53) {
+                if (mc.player.currentScreenHandler == null) {
+                    ChatUtils.error("GUI closed unexpectedly.");
+                    step = Step.OPEN_AH;
                     timer = ONE_SECOND;
                     return;
                 }
 
-                // Place item into auction slot (53)
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
-                    6,
+                    auctionSlotSetting.get(),
                     0,
                     SlotActionType.PICKUP,
                     mc.player
                 );
 
-                timer = ONE_SECOND;
+                timer = HALF_SECOND;
                 step = Step.ENTER_PRICE;
             }
 
@@ -168,36 +271,30 @@ public class AutoAuction extends Module {
                         ""
                     )
                 );
-
+                timer = HALF_SECOND;
                 step = Step.CONFIRM_SIGN;
-                timer = ONE_SECOND;
             }
 
             case CONFIRM_SIGN -> {
                 if (mc.player.currentScreenHandler != null) {
                     mc.player.closeHandledScreen();
                 }
-                step = Step.EXIT_MENU;
-                timer = ONE_SECOND;
-            }
-
-            case EXIT_MENU -> {
-                if (mc.player.currentScreenHandler != null) {
-                    mc.interactionManager.clickSlot(
-                        mc.player.currentScreenHandler.syncId,
-                        6,
-                        0,
-                        SlotActionType.PICKUP,
-                        mc.player
-                    );
+                
+                auctionsCreated++;
+                ChatUtils.info("Auction #" + auctionsCreated + " created successfully.");
+                
+                int maxAuctions = maxAuctionsSetting.get();
+                if (maxAuctions > 0 && auctionsCreated >= maxAuctions) {
+                    ChatUtils.info("Reached maximum auction limit (" + maxAuctions + ").");
+                    toggle();
+                    return;
                 }
-                ChatUtils.info("Auction created successfully.");
+                
                 step = Step.WAIT_REPEAT;
                 timer = repeatDelayTicks;
             }
 
             case WAIT_REPEAT -> {
-                // Start a new auction cycle
                 step = Step.OPEN_AH;
                 timer = ONE_SECOND;
             }
