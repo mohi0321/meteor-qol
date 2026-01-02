@@ -328,7 +328,7 @@ public class AutoAuction extends Module {
             }
 
             case CONFIRM_AUCTION -> {
-             if(mc.currentScreenHandler == null) {
+             if(mc.player.currentScreenHandler == null) {
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     auctionSlotSetting.get(),
