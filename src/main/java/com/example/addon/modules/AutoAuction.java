@@ -48,7 +48,7 @@ public class AutoAuction extends Module {
         new IntSetting.Builder()
             .name("price")
             .description("Auction price.")
-            .defaultValue(1000)
+            .defaultValue(799)
             .min(1)
             .build()
     );
