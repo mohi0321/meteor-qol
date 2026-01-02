@@ -120,9 +120,8 @@ public class AutoAuction extends Module {
                     return;
                 }
 
-                // Use InvUtils to find item in hands, hotbar, or inventory
-                InvUtils.FindItemResult result = InvUtils.find(targetItem);
-                int foundSlot = result.slot();
+                // Inline usage of InvUtils.find to avoid FindItemResult symbol issues
+                int foundSlot = InvUtils.find(targetItem).slot();
 
                 if (foundSlot == -1) {
                     ChatUtils.error("Could not find the item in your inventory.");
