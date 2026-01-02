@@ -1,6 +1,6 @@
 package com.example.addon.modules;
 
-import com.example.addon.AddonTemplate;
+import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
@@ -96,7 +96,7 @@ public class AutoLibrarian extends Module {
     private int timer = 0;
 
     public AutoLibrarian() {
-        super(AddonTemplate.CATEGORY, "auto-librarian", "Automatically rolls villager trades for desired enchanted books.");
+        super(Enhanced.CATEGORY, "auto-librarian", "Automatically rolls villager trades for desired enchanted books.");
     }
 
     @Override

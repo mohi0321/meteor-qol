@@ -1,6 +1,6 @@
 package com.example.addon.modules;
 
-import com.example.addon.AddonTemplate;
+import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -31,7 +31,7 @@ public class AutoChat extends Module {
     private int timer;
 
     public AutoChat() {
-        super(AddonTemplate.CATEGORY, "auto-chat", "Automatically sends a message after a delay.");
+        super(Enhanced.CATEGORY, "auto-chat", "Automatically sends a message after a delay.");
     }
 
     @Override

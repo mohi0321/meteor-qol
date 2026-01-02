@@ -1,6 +1,6 @@
 package com.example.addon.modules;
 
-import com.example.addon.AddonTemplate;
+import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.events.world.TickEvent;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
@@ -67,7 +67,7 @@ public class EnchantedBookBuyer extends Module {
     private int timer = 0;
 
     public EnchantedBookBuyer() {
-        super(AddonTemplate.CATEGORY, "enchanted-book-buyer", "Buys specific enchanted books from all nearby librarians.");
+        super(Enhanced.CATEGORY, "enchanted-book-buyer", "Buys specific enchanted books from all nearby librarians.");
     }
 
     @Override

@@ -27,6 +27,7 @@ public class AddonTemplate extends MeteorAddon {
         Modules.get().add(new AutoLibrarian());
         Modules.get().add(new EnchantedBookBuyer());
         Modules.get().add(new AutoChat());
+        Modules.get().add(new InventoryInteractionDebug());
 
         // Commands
         Commands.add(new CommandExample());
