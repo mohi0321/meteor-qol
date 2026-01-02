@@ -53,6 +53,17 @@ public class EnchantedBookBuyer extends Module {
         .build()
     );
 
+    private final Setting<Double> delay = sgGeneral.add(new DoubleSetting.Builder()
+        .name("delay")
+        .description("The delay between actions in seconds.")
+        .defaultValue(0.5)
+        .min(0)
+        .sliderMax(5)
+        .build()
+    );
+
+
+
     private enum State {
         SEARCHING,
         TRAVELLING,
@@ -65,6 +76,7 @@ public class EnchantedBookBuyer extends Module {
     private final Set<Integer> visitedVillagers = new HashSet<>();
     private VillagerEntity targetVillager;
     private int timer = 0;
+    private final Random random = new Random();
 
     public EnchantedBookBuyer() {
         super(Enhanced.CATEGORY, "enchanted-book-buyer", "Buys specific enchanted books from all nearby librarians.");
@@ -152,7 +164,7 @@ public class EnchantedBookBuyer extends Module {
             if (timer <= 0) {
                 Rotations.rotate(Rotations.getYaw(targetVillager), Rotations.getPitch(targetVillager));
                 mc.interactionManager.interactEntity(mc.player, targetVillager, Hand.MAIN_HAND);
-                timer = 20; // wait for screen
+                timer = (int) (delay.get() * 20); // wait for screen
             }
             return;
         }
@@ -182,7 +194,7 @@ public class EnchantedBookBuyer extends Module {
                  // We want to buy ALL. InvUtils quickMove or standard click loop?
                  // Quick move (shift click) is best to buy max stack.
                  InvUtils.shiftClick().slotId(2);
-                 timer = 5; // small delay between buys
+                 timer = (int) (delay.get() * 20); // small delay between buys
              } else {
                  // Done with this villager (either out of stock or full inv or no money)
                  finishTrading();
@@ -198,12 +210,18 @@ public class EnchantedBookBuyer extends Module {
         visitedVillagers.add(targetVillager.getId());
         targetVillager = null;
         currentState = State.SEARCHING;
-        timer = 10;
+        timer = (int) (delay.get() * 20);
     }
 
     private void handleDropping() {
-        // Look down
-        Rotations.rotate(mc.player.getYaw(), 90);
+        // Tween rotation
+        float pitch = mc.player.getPitch();
+        if (pitch < 90) {
+            float newPitch = Math.min(90, pitch + 5);
+            float yaw = mc.player.getYaw() + (random.nextFloat() - 0.5f) * 10f;
+            Rotations.rotate(yaw, newPitch);
+            return;
+        }
         
         // Iterate inventory and drop valid books
         // We need to check exact NBT match or just any enchanted book?
@@ -223,7 +241,7 @@ public class EnchantedBookBuyer extends Module {
         if (!droppedAny) {
              currentState = State.FINISH;
         }
-        timer = 5; // delay for drops
+        timer = (int) (delay.get() * 20); // delay for drops
     }
 
     private boolean isValidTrade(TradeOffer offer) {
