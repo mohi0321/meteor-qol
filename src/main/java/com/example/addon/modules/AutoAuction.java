@@ -9,8 +9,8 @@ import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
-import net.minecraft.item.Items;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -19,38 +19,38 @@ public class AutoAuction extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
     private final Setting<String> item = sgGeneral.add(
-        new StringSetting.Builder()
-            .name("item")
-            .description("The item to auction.")
-            .defaultValue("minecraft:enchanted_book")
-            .build()
+            new StringSetting.Builder()
+                    .name("item")
+                    .description("The item to auction.")
+                    .defaultValue("minecraft:enchanted_book")
+                    .build()
     );
 
     private final Setting<Integer> delay = sgGeneral.add(
-        new IntSetting.Builder()
-            .name("delay")
-            .description("The delay between auctions.")
-            .defaultValue(10)
-            .min(0)
-            .max(60)
-            .build()
+            new IntSetting.Builder()
+                    .name("delay")
+                    .description("The delay between auctions.")
+                    .defaultValue(10)
+                    .min(0)
+                    .max(60)
+                    .build()
     );
 
     private final Setting<Boolean> repeat = sgGeneral.add(
-        new BoolSetting.Builder()
-            .name("repeat")
-            .description("Repeat auctions.")
-            .defaultValue(false)
-            .build()
+            new BoolSetting.Builder()
+                    .name("repeat")
+                    .description("Repeat auctions.")
+                    .defaultValue(false)
+                    .build()
     );
 
     private final Setting<Integer> priceSetting = sgGeneral.add(
-        new IntSetting.Builder()
-            .name("price")
-            .description("Auction price.")
-            .defaultValue(799)
-            .min(1)
-            .build()
+            new IntSetting.Builder()
+                    .name("price")
+                    .description("Auction price.")
+                    .defaultValue(1000)
+                    .min(1)
+                    .build()
     );
 
     public AutoAuction() {
@@ -73,7 +73,7 @@ public class AutoAuction extends Module {
     private void onTick(TickEvent.Pre event) {
         if (mc.player == null || mc.world == null) return;
 
-        // Timer handling (WICHTIG)
+        // Timer abarbeiten
         if (timer > 0) {
             timer--;
             return;
@@ -94,11 +94,11 @@ public class AutoAuction extends Module {
                 }
 
                 mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    53,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
+                        mc.player.currentScreenHandler.syncId,
+                        53,
+                        0,
+                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        mc.player
                 );
 
                 step = Step.FIND_ITEM;
@@ -106,7 +106,9 @@ public class AutoAuction extends Module {
             }
 
             case FIND_ITEM -> {
-                FindItemResult result = InvUtils.find(item.get());
+                // String -> Item konvertieren
+                Item targetItem = Registries.ITEM.get(new net.minecraft.util.Identifier(item.get()));
+                FindItemResult result = InvUtils.find(targetItem);
 
                 if (!result.found()) {
                     ChatUtils.error("Item not found: " + item.get());
@@ -115,11 +117,11 @@ public class AutoAuction extends Module {
                 }
 
                 mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    result.slot(),
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
+                        mc.player.currentScreenHandler.syncId,
+                        result.slot(),
+                        0,
+                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        mc.player
                 );
 
                 step = Step.PLACE_ITEM;
@@ -128,11 +130,11 @@ public class AutoAuction extends Module {
 
             case PLACE_ITEM -> {
                 mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    6,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
+                        mc.player.currentScreenHandler.syncId,
+                        6,
+                        0,
+                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        mc.player
                 );
 
                 step = Step.ENTER_PRICE;
@@ -147,8 +149,8 @@ public class AutoAuction extends Module {
                         screen.charTyped(c, 0);
                     }
 
-                    // Schild bestätigen (NICHT ESC!)
-                    screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                    // Schild bestätigen
+                    screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
                 }
 
                 step = Step.CONFIRM_AUCTION;
@@ -157,11 +159,11 @@ public class AutoAuction extends Module {
 
             case CONFIRM_AUCTION -> {
                 mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    6,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
+                        mc.player.currentScreenHandler.syncId,
+                        6,
+                        0,
+                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        mc.player
                 );
 
                 step = Step.OPEN_AH;
