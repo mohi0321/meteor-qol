@@ -106,7 +106,7 @@ public class AutoAuction extends Module {
             }
 
             case FIND_ITEM -> {
-                FindItemResult result = InvUtils.findItem(item.get());
+                FindItemResult result = InvUtils.find(item.get());
 
                 if (!result.found()) {
                     ChatUtils.error("Item not found: " + item.get());
