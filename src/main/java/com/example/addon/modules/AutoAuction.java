@@ -154,7 +154,7 @@ public class AutoAuction extends Module {
                     }
 
                     // Schild bestätigen
-                    screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                    screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
                 }
 
                 step = Step.CONFIRM_AUCTION;
