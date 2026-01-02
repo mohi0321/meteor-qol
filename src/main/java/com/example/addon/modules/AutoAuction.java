@@ -131,7 +131,7 @@ public class AutoAuction extends Module {
                 ChatUtils.info("Found item in slot: " + foundSlot);
 
                 // Pick up the item
-                InvUtils.click(foundSlot)
+                InvUtils.click(foundSlot);
 
                 timer = ONE_SECOND;
                 step = Step.PLACE_ITEM;
