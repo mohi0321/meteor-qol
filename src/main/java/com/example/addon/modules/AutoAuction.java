@@ -309,7 +309,7 @@ public class AutoAuction extends Module {
             case CONFIRM_SIGN -> {
                 // Press Enter to confirm the sign
                 if (mc.currentScreen instanceof SignEditScreen) {
-                    mc.currentScreen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                    mc.currentScreen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
                 }
                 
                 auctionsCreated++;
@@ -324,6 +324,18 @@ public class AutoAuction extends Module {
                 
                 step = Step.WAIT_REPEAT;
                 timer = repeatDelayTicks;
+            }
+
+            case CONFIRM_AUCTION -> {
+             if(mc.currentScreenHandler != null) {
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    auctionSlotSetting.get(),
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+             }
             }
 
             case WAIT_REPEAT -> {
