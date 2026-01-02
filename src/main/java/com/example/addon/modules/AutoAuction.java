@@ -43,7 +43,6 @@ public class AutoAuction extends Module {
     private enum State {
         WAITING,
         SELECT_ITEM,
-        SEND_COMMAND,
         FINISH
     }
 
@@ -93,6 +92,16 @@ public class AutoAuction extends Module {
                     return;
                 }
 
+                ChatUtils.sendPlayerMsg("/ah");
+
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    53,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+
                 // Find Item
                 FindItemResult result = InvUtils.find(item);
                 if (!result.found()) {
@@ -102,25 +111,53 @@ public class AutoAuction extends Module {
                 }
 
                 // Select in hotbar
-                if (result.isHotbar()) {
-                    InvUtils.swap(result.slot(), true);
-                } else {
-                    InvUtils.move().from(result.slot()).toHotbar(mc.player.getInventory().selectedSlot);
-                    InvUtils.swap(mc.player.getInventory().selectedSlot, true);
-                }
+
+
+                
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    result.slot(),
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    6,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+
+                
+                BlockPos = screen.getPos();
+                mc.player.netWorkHandler.sendPacket(
+                    new.UpdateSignC2SPacket(
+                        BlockPos,
+                        true,
+                        targetPrice
+                        
+                    )
+                );
+
+                mc.player.closeHandledScreen();
+
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    6,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
                 
                 ChatUtils.info("Selected item " + targetItemId);
-                currentState = State.SEND_COMMAND;
-                timer = 10;
-            }
-            case SEND_COMMAND -> {
-                ChatUtils.sendPlayerMsg("/ah sell " + targetPrice);
-                ChatUtils.info("Sold item for " + targetPrice);
                 currentState = State.FINISH;
                 timer = 10;
-            }
+
             case FINISH -> {
                 // Done. Repeat after delay?
+                mc.player.closeHandledScreen();
                 currentState = State.SELECT_ITEM;
                 timer = actionDelayTicks;
             }
