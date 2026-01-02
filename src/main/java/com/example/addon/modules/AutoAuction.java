@@ -31,26 +31,18 @@ public class AutoAuction extends Module {
         .build()
     );
 
-    private final Setting<Integer> delaySetting = sgGeneral.add(new IntSetting.Builder()
-        .name("delay")
-        .defaultValue(10)
-        .min(1)
-        .sliderMax(60)
-        .build()
-    );
-
     private enum Step {
         OPEN_AH,
+        PRESS_CREATE,
         PICK_ITEM,
         PLACE_ITEM,
         ENTER_PRICE,
-        CONFIRM,
-        FINISH
+        CONFIRM_SIGN,
+        EXIT_MENU
     }
 
     private Step step;
     private int timer;
-    private int repeatDelay;
     private Item targetItem;
     private String targetPrice;
 
@@ -65,7 +57,6 @@ public class AutoAuction extends Module {
 
         targetItem = Registries.ITEM.get(Identifier.tryParse(id));
         targetPrice = priceSetting.get();
-        repeatDelay = delaySetting.get() * 20;
 
         if (targetItem == Items.AIR) {
             ChatUtils.error("Invalid item ID.");
@@ -83,8 +74,21 @@ public class AutoAuction extends Module {
         if (timer-- > 0) return;
 
         switch (step) {
+
             case OPEN_AH -> {
                 ChatUtils.sendPlayerMsg("/ah");
+                step = Step.PRESS_CREATE;
+                timer = 20;
+            }
+
+            case PRESS_CREATE -> {
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    53,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
                 step = Step.PICK_ITEM;
                 timer = 20;
             }
@@ -92,7 +96,7 @@ public class AutoAuction extends Module {
             case PICK_ITEM -> {
                 boolean found = false;
 
-                for (int i = 54; i < mc.player.currentScreenHandler.slots.size(); i++) {
+                for (int i = 54; i <= 89; i++) {
                     ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
 
                     if (!stack.isEmpty() && stack.getItem() == targetItem) {
@@ -109,7 +113,7 @@ public class AutoAuction extends Module {
                 }
 
                 if (!found) {
-                    ChatUtils.warning("Item not found in inventory.");
+                    ChatUtils.warning("Item NOT found between slot 54 and 89.");
                     toggle();
                     return;
                 }
@@ -126,7 +130,6 @@ public class AutoAuction extends Module {
                     SlotActionType.PICKUP,
                     mc.player
                 );
-
                 step = Step.ENTER_PRICE;
                 timer = 20;
             }
@@ -145,21 +148,27 @@ public class AutoAuction extends Module {
                     )
                 );
 
-                step = Step.CONFIRM;
+                step = Step.CONFIRM_SIGN;
                 timer = 20;
             }
 
-            case CONFIRM -> {
+            case CONFIRM_SIGN -> {
                 mc.player.closeHandledScreen();
-                ChatUtils.info("Auctioned item for " + targetPrice);
-
-                step = Step.FINISH;
+                step = Step.EXIT_MENU;
                 timer = 20;
             }
 
-            case FINISH -> {
-                step = Step.OPEN_AH;
-                timer = repeatDelay;
+            case EXIT_MENU -> {
+                mc.interactionManager.clickSlot(
+                    mc.player.currentScreenHandler.syncId,
+                    6,
+                    0,
+                    SlotActionType.PICKUP,
+                    mc.player
+                );
+
+                ChatUtils.info("Auction created successfully.");
+                toggle();
             }
         }
     }
