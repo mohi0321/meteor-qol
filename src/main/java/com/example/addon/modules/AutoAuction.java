@@ -11,7 +11,9 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class AutoAuction extends Module {
@@ -97,7 +99,7 @@ public class AutoAuction extends Module {
                         mc.player.currentScreenHandler.syncId,
                         53,
                         0,
-                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        SlotActionType.PICKUP,
                         mc.player
                 );
 
@@ -107,7 +109,9 @@ public class AutoAuction extends Module {
 
             case FIND_ITEM -> {
                 // String -> Item konvertieren
-                Item targetItem = Registries.ITEM.get(new net.minecraft.util.Identifier(item.get()));
+                String[] split = item.get().split(":", 2);
+                Item targetItem = Registries.ITEM.get(new Identifier(split[0], split[1]));
+
                 FindItemResult result = InvUtils.find(targetItem);
 
                 if (!result.found()) {
@@ -120,7 +124,7 @@ public class AutoAuction extends Module {
                         mc.player.currentScreenHandler.syncId,
                         result.slot(),
                         0,
-                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        SlotActionType.PICKUP,
                         mc.player
                 );
 
@@ -133,7 +137,7 @@ public class AutoAuction extends Module {
                         mc.player.currentScreenHandler.syncId,
                         6,
                         0,
-                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        SlotActionType.PICKUP,
                         mc.player
                 );
 
@@ -150,7 +154,7 @@ public class AutoAuction extends Module {
                     }
 
                     // Schild bestätigen
-                    screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
+                    screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
                 }
 
                 step = Step.CONFIRM_AUCTION;
@@ -162,7 +166,7 @@ public class AutoAuction extends Module {
                         mc.player.currentScreenHandler.syncId,
                         6,
                         0,
-                        meteordevelopment.meteorclient.utils.player.InvUtils.Action.SlotActionType.PICKUP,
+                        SlotActionType.PICKUP,
                         mc.player
                 );
 
