@@ -2,6 +2,7 @@ package com.example.addon;
 import com.example.addon.modules.AutoLibrarian;
 import com.example.addon.modules.EnchantedBookBuyer;
 import com.example.addon.modules.AutoChat;
+import com.example.addon.modules.InventoryInteractionDebug;
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
 import com.mojang.logging.LogUtils;
@@ -14,7 +15,7 @@ import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
 
-public class AddonTemplate extends MeteorAddon {
+public class Enhanced extends MeteorAddon {
     public static final Logger LOG = LogUtils.getLogger();
     public static final Category CATEGORY = new Category("Enhanced");
     public static final HudGroup HUD_GROUP = new HudGroup("Enhanced");
