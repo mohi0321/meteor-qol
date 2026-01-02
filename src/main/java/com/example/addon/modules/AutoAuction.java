@@ -122,21 +122,16 @@ public class AutoAuction extends Module {
 
                 // Inline usage of InvUtils.find to avoid FindItemResult symbol issues
                 int foundSlot = InvUtils.find(targetItem).slot();
-
+                
                 if (foundSlot == -1) {
                     ChatUtils.error("Could not find the item in your inventory.");
                     toggle(); // disable module if item not found
                     return;
                 }
+                ChatUtils.info("Found item in slot: " + foundSlot);
 
                 // Pick up the item
-                mc.interactionManager.clickSlot(
-                    mc.player.currentScreenHandler.syncId,
-                    foundSlot,
-                    0,
-                    SlotActionType.PICKUP,
-                    mc.player
-                );
+                InvUtils.click(foundSlot)
 
                 timer = ONE_SECOND;
                 step = Step.PLACE_ITEM;
@@ -151,7 +146,7 @@ public class AutoAuction extends Module {
                 // Place item into auction slot (53)
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
-                    53,
+                    6,
                     0,
                     SlotActionType.PICKUP,
                     mc.player
