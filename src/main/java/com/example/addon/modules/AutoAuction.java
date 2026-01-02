@@ -14,7 +14,8 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
+import net.minecraft.client.gui.screen.ingame.SignEditScreen;
+import org.lwjgl.glfw.GLFW;
 
 public class AutoAuction extends Module {
 
@@ -84,7 +85,8 @@ public class AutoAuction extends Module {
         WAIT_CREATE_GUI,
         PICK_ITEM,
         PLACE_ITEM,
-        ENTER_PRICE,
+        WAIT_SIGN,
+        TYPE_PRICE,
         CONFIRM_SIGN,
         WAIT_REPEAT
     }
@@ -96,6 +98,7 @@ public class AutoAuction extends Module {
     private int repeatDelayTicks;
     private int auctionsCreated;
     private int retryCount;
+    private int typingIndex;
     private static final int MAX_RETRIES = 5;
 
     public AutoAuction() {
@@ -112,6 +115,7 @@ public class AutoAuction extends Module {
         repeatDelayTicks = repeatDelaySetting.get() * 20;
         auctionsCreated = 0;
         retryCount = 0;
+        typingIndex = 0;
 
         if (targetItem == Items.AIR) {
             ChatUtils.error("Invalid item ID: " + itemSetting.get());
@@ -255,36 +259,57 @@ public class AutoAuction extends Module {
                 );
 
                 timer = HALF_SECOND;
-                step = Step.ENTER_PRICE;
+                step = Step.WAIT_SIGN;
             }
 
-            case ENTER_PRICE -> {
-                // Wait for sign GUI to appear
-                if (mc.currentScreen == null) {
-                    timer = HALF_SECOND;
+            case WAIT_SIGN -> {
+                // Wait for sign screen to open
+                if (mc.currentScreen instanceof SignEditScreen) {
+                    typingIndex = 0;
+                    step = Step.TYPE_PRICE;
+                    timer = 5; // Small delay before typing
+                } else {
+                    if (++retryCount > MAX_RETRIES) {
+                        ChatUtils.error("Sign screen failed to open.");
+                        step = Step.OPEN_AH;
+                        timer = ONE_SECOND;
+                    } else {
+                        timer = HALF_SECOND;
+                    }
+                }
+            }
+
+            case TYPE_PRICE -> {
+                if (!(mc.currentScreen instanceof SignEditScreen)) {
+                    ChatUtils.error("Sign screen closed unexpectedly.");
+                    step = Step.OPEN_AH;
+                    timer = ONE_SECOND;
                     return;
                 }
-                
-                // Send the sign packet with price on first line
-                BlockPos pos = mc.player.getBlockPos();
-                mc.player.networkHandler.sendPacket(
-                    new UpdateSignC2SPacket(
-                        pos,
-                        true,
-                        targetPrice,
-                        "",
-                        "",
-                        ""
-                    )
-                );
-                
-                timer = ONE_SECOND;
-                step = Step.CONFIRM_SIGN;
+
+                // Type one character at a time
+                if (typingIndex < targetPrice.length()) {
+                    char c = targetPrice.charAt(typingIndex);
+                    
+                    // Send the character as a typed key
+                    if (mc.currentScreen != null) {
+                        mc.currentScreen.charTyped(c, 0);
+                    }
+                    
+                    typingIndex++;
+                    timer = 2; // Small delay between characters
+                } else {
+                    // Done typing, press enter
+                    step = Step.CONFIRM_SIGN;
+                    timer = HALF_SECOND;
+                    retryCount = 0;
+                }
             }
 
             case CONFIRM_SIGN -> {
-                if (mc.player.currentScreenHandler != null) {
-                    mc.player.closeHandledScreen();
+                // Press Enter to confirm the sign
+                if (mc.currentScreen instanceof SignEditScreen) {
+                    mc.currentScreen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
                 }
                 
                 auctionsCreated++;
