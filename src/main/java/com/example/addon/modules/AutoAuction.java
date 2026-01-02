@@ -85,7 +85,7 @@ public class AutoAuction extends Module {
             case SELECT_ITEM -> {
                 // Parse Item ID
                 String[] split = targetItemId.split(":");
-                Item item = Registries.ITEM.get(new Identifier(split[0], split[1]));
+                Item item = Registries.ITEM.get(Identifier.of(split[0], split[1]));
                 
                 if (item == Items.AIR) {
                     ChatUtils.error("Invalid item ID: " + targetItemId);
