@@ -64,11 +64,18 @@ public class AutoAuction extends Module {
         FIND_ITEM,
         PLACE_ITEM,
         ENTER_PRICE,
+        EXIT_SIGN,
         CONFIRM_AUCTION
     }
 
     private Step step = Step.OPEN_AH;
     private int timer = 0;
+
+    @Override
+    public void onActivate() {
+        step = Step.OPEN_AH;
+        timer = 0;
+    }
 
     @EventHandler
     private void onTick(TickEvent.Pre event) {
@@ -143,8 +150,12 @@ public class AutoAuction extends Module {
                         screen.charTyped(c, 0);
                     }
                     // Schild bestätigen
-                    screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                    screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
                 }
+                step = Step.EXIT_SIGN;
+                timer = 20;
+            }
+            case EXIT_SIGN -> {
                 step = Step.CONFIRM_AUCTION;
                 timer = 20;
             }
@@ -157,12 +168,11 @@ public class AutoAuction extends Module {
                     mc.player
                 );
                 
-                // Check if repeat is enabled before continuing
                 if (repeat.get()) {
                     step = Step.OPEN_AH;
                     timer = delay.get() * 20;
                 } else {
-                    toggle(); // Disable the module after first execution
+                    toggle();
                 }
             }
         }
