@@ -20,39 +20,48 @@ public class DrownedTridentESP extends Module {
 
     private final SettingGroup sgRender = settings.createGroup("Rendering");
 
-    // Appearance settings
-    private final Setting<SettingColor> color = sgRender.add(new ColorSetting.Builder()
+    private final Setting<SettingColor> color = sgRender.add(
+        new ColorSetting.Builder()
             .name("color")
-            .description("Color of the ESP box and lines.")
+            .description("Color of the ESP box.")
             .defaultValue(new SettingColor(50, 255, 100, 200))
-            .build());
+            .build()
+    );
 
-    private final Setting<Double> lineWidth = sgRender.add(new DoubleSetting.Builder()
+    private final Setting<Double> lineWidth = sgRender.add(
+        new DoubleSetting.Builder()
             .name("line-width")
             .description("Thickness of the outline lines.")
             .defaultValue(1.5)
             .min(0.5)
             .sliderRange(0.5, 5)
-            .build());
+            .build()
+    );
 
-    private final Setting<RenderMode> mode = sgRender.add(new EnumSetting.Builder<RenderMode>()
+    private final Setting<RenderMode> mode = sgRender.add(
+        new EnumSetting.Builder<RenderMode>()
             .name("mode")
             .description("How the ESP should be rendered.")
             .defaultValue(RenderMode.Both)
-            .build());
+            .build()
+    );
 
-    private final Setting<Boolean> tracers = sgRender.add(new BoolSetting.Builder()
+    private final Setting<Boolean> tracers = sgRender.add(
+        new BoolSetting.Builder()
             .name("tracers")
-            .description("Draw tracers from the player to Drowned holding tridents.")
+            .description("Draw tracers to Drowned holding tridents.")
             .defaultValue(true)
-            .build());
+            .build()
+    );
 
-    private final Setting<SettingColor> tracerColor = sgRender.add(new ColorSetting.Builder()
+    private final Setting<SettingColor> tracerColor = sgRender.add(
+        new ColorSetting.Builder()
             .name("tracer-color")
             .description("Color of the tracers.")
             .defaultValue(new SettingColor(255, 50, 50, 200))
             .visible(tracers::get)
-            .build());
+            .build()
+    );
 
     public enum RenderMode {
         Lines,
@@ -61,7 +70,8 @@ public class DrownedTridentESP extends Module {
     }
 
     public DrownedTridentESP() {
-        super(Enhanced.Visuals, "drowned-trident-esp", "Highlights Drowned mobs holding tridents with optional tracers.");
+        super(Enhanced.Visuals, "drowned-trident-esp",
+            "Highlights Drowned mobs holding tridents with optional tracers.");
     }
 
     @EventHandler
@@ -69,48 +79,53 @@ public class DrownedTridentESP extends Module {
         if (mc.player == null || mc.world == null) return;
 
         Vec3d playerPos = mc.player.getLerpedPos(event.tickDelta);
+        Color espColor = new Color(color.get());
 
         StreamSupport.stream(mc.world.getEntities().spliterator(), false)
-                .filter(entity -> entity instanceof DrownedEntity)
-                .map(entity -> (DrownedEntity) entity)
-                .filter(this::isHoldingTrident)
-                .forEach(drowned -> {
-                    Box box = drowned.getBoundingBox();
-                    Color fillColor = new Color(color.get());
-                    Color lineColor = new Color(color.get());
+            .filter(entity -> entity instanceof DrownedEntity)
+            .map(entity -> (DrownedEntity) entity)
+            .filter(this::isHoldingTrident)
+            .forEach(drowned -> {
+                Box box = drowned.getBoundingBox();
 
-                    // Render filled box
-                    if (mode.get() == RenderMode.Box || mode.get() == RenderMode.Both) {
-                        event.renderer.box(box, fillColor, lineColor, ShapeMode.Sides, 0);
-                    }
+                // Filled box
+                if (mode.get() == RenderMode.Box || mode.get() == RenderMode.Both) {
+                    event.renderer.box(box, espColor, espColor, ShapeMode.Sides, 0);
+                }
 
-                    // Render outline
-                    if (mode.get() == RenderMode.Lines || mode.get() == RenderMode.Both) {
-                        event.renderer.box(box, fillColor, lineColor, ShapeMode.Lines, 0);
-                    }
+                // Outline
+                if (mode.get() == RenderMode.Lines || mode.get() == RenderMode.Both) {
+                    event.renderer.box(
+                        box,
+                        null,
+                        espColor,
+                        ShapeMode.Lines,
+                        lineWidth.get()
+                    );
+                }
 
-                    // Render tracer if enabled
-                    if (tracers.get()) {
-                        Vec3d entityPos = drowned.getPos().add(0, drowned.getHeight() / 2.0, 0); // middle of entity
-                        Vec3d startPos;
+                // Tracers
+                if (tracers.get()) {
+                    Vec3d target = drowned.getPos()
+                        .add(0, drowned.getHeight() / 2.0, 0);
 
-                        if (mc.options.getPerspective().isFirstPerson()) {
-                            Vec3d lookDir = mc.player.getRotationVector();
-                            startPos = playerPos.add(0, mc.player.getEyeHeight(mc.player.getPose()), 0)
-                                    .add(lookDir.multiply(0.5));
-                        } else {
-                            startPos = playerPos.add(0, mc.player.getEyeHeight(mc.player.getPose()), 0);
-                        }
+                    Vec3d start = playerPos.add(
+                        0,
+                        mc.player.getEyeHeight(mc.player.getPose()),
+                        0
+                    );
 
-                        Color tracerCol = new Color(tracerColor.get());
-                        event.renderer.line(startPos.x, startPos.y, startPos.z,
-                                entityPos.x, entityPos.y, entityPos.z, tracerCol);
-                    }
-                });
+                    event.renderer.line(
+                        start.x, start.y, start.z,
+                        target.x, target.y, target.z,
+                        new Color(tracerColor.get())
+                    );
+                }
+            });
     }
 
     private boolean isHoldingTrident(DrownedEntity drowned) {
-        return drowned.getStackInHand(Hand.MAIN_HAND).getItem() == Items.TRIDENT ||
-               drowned.getStackInHand(Hand.OFF_HAND).getItem() == Items.TRIDENT;
+        return drowned.getStackInHand(Hand.MAIN_HAND).getItem() == Items.TRIDENT
+            || drowned.getStackInHand(Hand.OFF_HAND).getItem() == Items.TRIDENT;
     }
 }
