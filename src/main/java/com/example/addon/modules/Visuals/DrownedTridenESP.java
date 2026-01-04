@@ -60,7 +60,7 @@ public class DrownedTridentESP extends Module {
         Both
     }
 
-    public DrownedTridenESP() {
+    public DrownedTridentESP() {
         super(Enhanced.Visuals, "drowned-trident-esp", "Highlights Drowned mobs holding tridents with optional tracers.");
     }
 
