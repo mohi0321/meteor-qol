@@ -15,6 +15,8 @@ import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import com.example.addon.modules.Visuals.DrownedTridenESP;
+import com.example.addon.modules.Automation.PlayerDisconnect;
 import org.slf4j.Logger;
 
 public class Enhanced extends MeteorAddon {
@@ -34,6 +36,8 @@ public class Enhanced extends MeteorAddon {
         Modules.get().add(new AutoAuction());
         Modules.get().add(new VillagerESP());
         Modules.get().add(new EnchantedBookBuyer());
+        Modules.get().add(new DrownedTridenESP());
+        Modules.get().add(new PlayerDisconnect());
 
         // Commands
         Commands.add(new CommandExample());
