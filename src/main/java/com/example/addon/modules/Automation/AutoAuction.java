@@ -1,4 +1,4 @@
-package com.example.addon.modules;
+package com.example.addon.modules.Automation;
 
 import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -55,7 +55,7 @@ public class AutoAuction extends Module {
     );
 
     public AutoAuction() {
-        super(Enhanced.CATEGORY, "auto-auction", "Automatically auction items.");
+        super(Enhanced.Automation, "auto-auction", "Automatically auction items.");
     }
 
     private enum Step {

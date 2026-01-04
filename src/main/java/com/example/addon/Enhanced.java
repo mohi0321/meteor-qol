@@ -1,8 +1,10 @@
 package com.example.addon;
-import com.example.addon.modules.AutoLibrarian;
-import com.example.addon.modules.EnchantedBookBuyer;
-import com.example.addon.modules.AutoChat;
-import com.example.addon.modules.InventoryInteractionDebug;
+import com.example.addon.modules.Automation.AutoLibrarian;
+import com.example.addon.modules.Automation.AutoAuction;
+import com.example.addon.modules.Automation.AutoChat;
+import com.example.addon.modules.Visuals.InventoryInteractionDebug;
+import com.example.addon.modules.Visuals.VillagerESP;
+import com.example.addon.modules.Automation.EnchantedBookBuyer;
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
 import com.mojang.logging.LogUtils;
@@ -13,12 +15,12 @@ import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import com.example.addon.modules.AutoAuction;
 import org.slf4j.Logger;
 
 public class Enhanced extends MeteorAddon {
     public static final Logger LOG = LogUtils.getLogger();
-    public static final Category CATEGORY = new Category("Enhanced");
+    public static final Category Automation = new Category("Enhanced Automation");
+    public static final Category Visuals = new Category("Enhanced Visuals");
     public static final HudGroup HUD_GROUP = new HudGroup("Enhanced");
 
     @Override
@@ -27,10 +29,11 @@ public class Enhanced extends MeteorAddon {
 
         // Modules
         Modules.get().add(new AutoLibrarian());
-        Modules.get().add(new EnchantedBookBuyer());
         Modules.get().add(new AutoChat());
         Modules.get().add(new InventoryInteractionDebug());
         Modules.get().add(new AutoAuction());
+        Modules.get().add(new VillagerESP());
+        Modules.get().add(new EnchantedBookBuyer());
 
         // Commands
         Commands.add(new CommandExample());
@@ -41,7 +44,8 @@ public class Enhanced extends MeteorAddon {
 
     @Override
     public void onRegisterCategories() {
-        Modules.registerCategory(CATEGORY);
+        Modules.registerCategory(Automation);
+        Modules.registerCategory(Visuals);
     }
 
     @Override

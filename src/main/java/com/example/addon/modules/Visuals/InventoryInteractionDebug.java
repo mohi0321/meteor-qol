@@ -1,4 +1,4 @@
-package com.example.addon.modules;
+package com.example.addon.modules.Visuals;
 
 import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
@@ -9,7 +9,7 @@ import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 
 public class InventoryInteractionDebug extends Module {
     public InventoryInteractionDebug() {
-        super(Enhanced.CATEGORY, "inventory-debug", "Debugs inventory interactions by printing slot IDs to chat.");
+        super(Enhanced.Visuals, "inventory-debug", "Debugs inventory interactions by printing slot IDs to chat.");
     }
 
     @EventHandler

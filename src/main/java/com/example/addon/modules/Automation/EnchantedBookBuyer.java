@@ -1,4 +1,4 @@
-package com.example.addon.modules;
+package com.example.addon.modules.Automation;
 
 import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -79,7 +79,7 @@ public class EnchantedBookBuyer extends Module {
     private final Random random = new Random();
 
     public EnchantedBookBuyer() {
-        super(Enhanced.CATEGORY, "enchanted-book-buyer", "Buys specific enchanted books from all nearby librarians.");
+        super(Enhanced.Automation, "enchanted-book-buyer", "Buys specific enchanted books from all nearby librarians.");
     }
 
     @Override

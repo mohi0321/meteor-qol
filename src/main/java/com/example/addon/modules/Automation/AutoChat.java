@@ -1,4 +1,4 @@
-package com.example.addon.modules;
+package com.example.addon.modules.Automation;
 
 import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.systems.modules.Module;
@@ -31,7 +31,7 @@ public class AutoChat extends Module {
     private int timer;
 
     public AutoChat() {
-        super(Enhanced.CATEGORY, "auto-chat", "Automatically sends a message after a delay.");
+        super(Enhanced.Automation, "auto-chat", "Automatically sends a message after a delay.");
     }
 
     @Override
