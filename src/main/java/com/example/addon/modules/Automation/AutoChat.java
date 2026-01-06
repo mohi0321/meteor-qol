@@ -28,7 +28,7 @@ public class AutoChat extends Module {
             .build()
     );
 
-    private int timer;
+    private double timer;
 
     public AutoChat() {
         super(Enhanced.Automation, "auto-chat", "Automatically sends a message after a delay.");
@@ -36,7 +36,7 @@ public class AutoChat extends Module {
 
     @Override
     public void onActivate() {
-        timer = delay.get()*20;
+        timer = (delay.get()*20)+0.1 + Math.random() * 0.9;
     }
 
     @EventHandler
@@ -46,7 +46,7 @@ public class AutoChat extends Module {
 
         if (timer <= 0) {
             ChatUtils.sendPlayerMsg(message.get());
-            timer = delay.get()*20;
+            timer = (delay.get()*20);
         } else {
             timer--;
         }

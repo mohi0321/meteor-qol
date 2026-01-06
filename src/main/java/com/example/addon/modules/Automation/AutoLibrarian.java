@@ -73,7 +73,7 @@ public class AutoLibrarian extends Module {
         .sliderMax(6)
         .build()
     );
-    
+
     // Render Settings
     private final Setting<SettingColor> renderColor = sgRender.add(new ColorSetting.Builder()
         .name("render-color")
@@ -83,7 +83,6 @@ public class AutoLibrarian extends Module {
     );
 
     public enum UpdateMode {
-        None,
         Remove,
         ToggleOff
     }
@@ -134,7 +133,7 @@ public class AutoLibrarian extends Module {
             setTargetJobSite();
             return;
         }
-        
+
         // Ensure job site is still a lectern or air (if we are placing)
         if (!placingJobSite && mc.world.getBlockState(jobSite).getBlock() != Blocks.LECTERN && mc.world.getBlockState(jobSite).getBlock() != Blocks.AIR) {
              setTargetJobSite();
@@ -160,7 +159,7 @@ public class AutoLibrarian extends Module {
 
     private void handleTrade() {
         if (mc.player.currentScreenHandler instanceof MerchantScreenHandler menu) {
-             if (menu.getExperience() > 0 && menu.getLevelProgress() > 1) { 
+             if (menu.getExperience() > 0 && menu.getLevelProgress() > 1) {
                  ChatUtils.warning("Villager is already experienced!");
                  experiencedVillagerIds.add(villager.getId());
                  villager = null;
@@ -177,7 +176,7 @@ public class AutoLibrarian extends Module {
                  reroll();
                  return;
              }
-             
+
              ChatUtils.info("Found book: " + offer.name + " " + offer.level + " for " + offer.price + " emeralds.");
 
              if (isWanted(offer)) {
@@ -193,7 +192,7 @@ public class AutoLibrarian extends Module {
              }
         }
     }
-    
+
     private void reroll() {
         mc.player.closeHandledScreen();
         breakingJobSite = true;
@@ -208,17 +207,17 @@ public class AutoLibrarian extends Module {
                  break;
              }
         }
-        
+
         if (mc.getNetworkHandler() != null)
              mc.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(tradeIndex));
-        
-        InvUtils.click().slotId(2); 
-        
+
+        InvUtils.click().slotId(2);
+
         ChatUtils.info("Locked in trade!");
         updateWantedList(offer);
         toggle();
     }
-    
+
     private void updateWantedList(BookOffer offer) {
         if (updateMode.get() == UpdateMode.Remove) {
             List<String> current = new ArrayList<>(wantedBooks.get());
@@ -234,7 +233,7 @@ public class AutoLibrarian extends Module {
 
     private void openTradeScreen() {
         if (timer > 0) return;
-        
+
         Rotations.rotate(Rotations.getYaw(villager), Rotations.getPitch(villager));
         mc.interactionManager.interactEntity(mc.player, villager, Hand.MAIN_HAND);
         timer = 20;
@@ -245,7 +244,7 @@ public class AutoLibrarian extends Module {
             breakingJobSite = false;
             return;
         }
-        
+
         if (mc.world.getBlockState(jobSite).getBlock() == Blocks.AIR) {
             breakingJobSite = false;
             placingJobSite = true;
@@ -267,7 +266,7 @@ public class AutoLibrarian extends Module {
             placingJobSite = false;
             return;
         }
-        
+
         if (timer > 0) return;
 
         FindItemResult lectern = InvUtils.find(Items.LECTERN);
@@ -285,7 +284,7 @@ public class AutoLibrarian extends Module {
     private void setTargetVillager() {
         double rangeSq = range.get() * range.get();
         if (mc.world == null) return;
-        
+
         Stream<Entity> stream = StreamSupport.stream(mc.world.getEntities().spliterator(), false)
             .filter(e -> e instanceof VillagerEntity)
             .filter(e -> !e.isRemoved())
@@ -299,7 +298,7 @@ public class AutoLibrarian extends Module {
             .filter(v -> !experiencedVillagerIds.contains(v.getId()))
             .min(Comparator.comparingDouble(e -> mc.player.squaredDistanceTo(e)))
             .orElse(null);
-            
+
         if (villager != null) {
             ChatUtils.info("Found villager at " + villager.getBlockPos());
         }
@@ -307,7 +306,7 @@ public class AutoLibrarian extends Module {
 
     private void setTargetJobSite() {
         if (villager == null || mc.world == null) return;
-        
+
         List<BlockPos> potSpots = new ArrayList<>();
         int r = range.get().intValue();
         BlockPos center = BlockPos.ofFloored(mc.player.getEyePos());
@@ -318,17 +317,17 @@ public class AutoLibrarian extends Module {
                 }
             }
         }
-        
+
         jobSite = potSpots.stream()
             .filter(pos -> mc.world.getBlockState(pos).getBlock() == Blocks.LECTERN)
             .min(Comparator.comparingDouble(pos -> villager.squaredDistanceTo(Vec3d.ofCenter(pos))))
             .orElse(null);
-            
+
         if (jobSite != null) {
             ChatUtils.info("Found lectern at " + jobSite);
         }
     }
-    
+
     @EventHandler
     private void onRender(Render3DEvent event) {
         if (villager != null) {
@@ -338,7 +337,7 @@ public class AutoLibrarian extends Module {
              event.renderer.box(jobSite, renderColor.get(), renderColor.get(), ShapeMode.Lines, 0);
         }
     }
-    
+
     private boolean isWanted(BookOffer offer) {
         for (String s : wantedBooks.get()) {
             BookOffer wanted = BookOffer.parse(s);
@@ -356,16 +355,16 @@ public class AutoLibrarian extends Module {
                 var enchantsComponent = EnchantmentHelper.getEnchantments(result);
                 Set<RegistryEntry<Enchantment>> enchants = enchantsComponent.getEnchantments();
                 if (enchants.isEmpty()) continue;
-                
+
                 RegistryEntry<Enchantment> key = enchants.iterator().next();
                 int level = enchantsComponent.getLevel(key);
-                
+
                 String id = key.getKey().map(k -> k.getValue().toString()).orElse(key.toString());
 
                 if (!id.contains(":") && !id.contains(".")) {
                     id = "minecraft:" + id;
                 }
-                
+
                 return new BookOffer(id, level, offer.getOriginalFirstBuyItem().getCount(), result);
             }
         }
@@ -384,7 +383,7 @@ public class AutoLibrarian extends Module {
             this.level = level;
             this.price = price;
             this.stack = stack;
-            this.name = id; 
+            this.name = id;
         }
 
         public static BookOffer parse(String s) {
@@ -399,7 +398,7 @@ public class AutoLibrarian extends Module {
             } catch (Exception e) {}
             return null;
         }
-        
+
         public boolean matches(BookOffer other) {
             boolean idMatch = this.id.equals(other.id) || other.id.endsWith(":" + this.id) || this.id.endsWith(":" + other.id);
              if (!idMatch) {
@@ -407,7 +406,7 @@ public class AutoLibrarian extends Module {
                  String cleanOther = other.id.replace("minecraft:", "");
                  idMatch = cleanThis.equals(cleanOther);
              }
-            
+
             return idMatch && other.level >= this.level && other.price <= this.price;
         }
     }

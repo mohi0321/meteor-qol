@@ -2,10 +2,12 @@ package com.example.addon;
 import com.example.addon.modules.Automation.AutoLibrarian;
 import com.example.addon.modules.Automation.AutoAuction;
 import com.example.addon.modules.Automation.AutoChat;
+import com.example.addon.modules.Visuals.VillagerESP;
 import com.example.addon.modules.Visuals.InventoryInteractionDebug;
 import com.example.addon.modules.Automation.EnchantedBookBuyer;
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
+import com.example.addon.modules.Visuals.VillagerEsp;
 import com.mojang.logging.LogUtils;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
@@ -22,6 +24,9 @@ public class Enhanced extends MeteorAddon {
     public static final Category Visuals = new Category("Enhanced Visuals");
     public static final HudGroup HUD_GROUP = new HudGroup("Enhanced");
 
+
+
+
     @Override
     public void onInitialize() {
         LOG.info("Initializing Meteor Addon Template");
@@ -32,6 +37,7 @@ public class Enhanced extends MeteorAddon {
         Modules.get().add(new InventoryInteractionDebug());
         Modules.get().add(new AutoAuction());
         Modules.get().add(new EnchantedBookBuyer());
+        Modules.get().add(new VillagerEsp());
 
         // Commands
         Commands.add(new CommandExample());
