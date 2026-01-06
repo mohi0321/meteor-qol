@@ -15,6 +15,7 @@ import meteordevelopment.meteorclient.settings.ColorSetting;
 import net.minecraft.entity.Entity;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.util.math.Vec3d;
 import meteordevelopment.meteorclient.settings.Setting;
 
 public class VillagerEsp extends Module {
@@ -79,13 +80,29 @@ public class VillagerEsp extends Module {
         for (Entity villager: villagerList){
             event.renderer.box(villager.getBoundingBox(), villagerColor.get(), villagerColor.get(), ShapeMode.Lines, 0);
             if(showTracers.get()){
-                event.renderer.line(villager.getX(), villager.getY(), villager.getZ(), mc.player.getX(), mc.player.getEyeY(), mc.player.getZ(), villagerColor.get(), villagerColor.get());
+                Vec3d cam = mc.gameRenderer.getCamera().getPos();
+                event.renderer.line(
+                    cam.x, cam.y, cam.z,
+                    villager.getX(),
+                    villager.getY() + villager.getHeight() / 2,
+                    villager.getZ(),
+                    villagerColor.get(),
+                    villagerColor.get()
+                );
             }
         }
         for (Entity zombieVillager: zombieVillagerList){
             event.renderer.box(zombieVillager.getBoundingBox(), zombieVillagerColor.get(), zombieVillagerColor.get(), ShapeMode.Lines, 0);
             if(showTracers.get()) {
-                event.renderer.line(zombieVillager.getX(), zombieVillager.getY(), zombieVillager.getZ(), mc.player.getX(), mc.player.getEyeY(), mc.player.getZ(), zombieVillagerColor.get(), zombieVillagerColor.get());
+                Vec3d cam = mc.gameRenderer.getCamera().getPos();
+                event.renderer.line(
+                    cam.x, cam.y, cam.z,
+                    zombieVillager.getX(),
+                    zombieVillager.getY() + zombieVillager.getHeight() / 2,
+                    zombieVillager.getZ(),
+                    zombieVillagerColor.get(),
+                    zombieVillagerColor.get()
+                );
             }
         }
     }
