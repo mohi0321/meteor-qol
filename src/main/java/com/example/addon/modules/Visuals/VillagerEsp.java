@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.util.math.Vec3d;
 import meteordevelopment.meteorclient.settings.Setting;
+import org.joml.Vector3f;
 
 public class VillagerEsp extends Module {
     private final List<Entity> villagerList = new ArrayList<>();
@@ -75,14 +76,34 @@ public class VillagerEsp extends Module {
     }
 
     @EventHandler
-    private void onRender(Render3DEvent event){
+    private void onRender(Render3DEvent event) {
         if (mc == null || mc.player == null || mc.world == null) return;
-        for (Entity villager: villagerList){
-            event.renderer.box(villager.getBoundingBox(), villagerColor.get(), villagerColor.get(), ShapeMode.Lines, 0);
-            if(showTracers.get()){
-                Vec3d cam = mc.gameRenderer.getCamera().getPos();
+
+        // Kamera-Position
+        Vec3d camPos = mc.gameRenderer.getCamera().getPos();
+
+        // Blickrichtung als Vector3f → Umwandlung zu Vec3d
+        Vector3f dir = mc.gameRenderer.getCamera().getHorizontalPlane();
+        Vec3d camDir = new Vec3d(dir.x(), dir.y(), dir.z());
+
+        // Startpunkt leicht vor der Kamera, damit Tracer nicht wegclippt
+        Vec3d start = camPos.add(camDir.multiply(0.1));
+
+        // Normale Villager
+        for (Entity villager : villagerList) {
+            // Bounding Box
+            event.renderer.box(
+                villager.getBoundingBox(),
+                villagerColor.get(),
+                villagerColor.get(),
+                ShapeMode.Lines,
+                0
+            );
+
+            // Tracer
+            if (showTracers.get()) {
                 event.renderer.line(
-                    cam.x, cam.y, cam.z,
+                    start.x, start.y, start.z,
                     villager.getX(),
                     villager.getY() + villager.getHeight() / 2,
                     villager.getZ(),
@@ -91,12 +112,22 @@ public class VillagerEsp extends Module {
                 );
             }
         }
-        for (Entity zombieVillager: zombieVillagerList){
-            event.renderer.box(zombieVillager.getBoundingBox(), zombieVillagerColor.get(), zombieVillagerColor.get(), ShapeMode.Lines, 0);
-            if(showTracers.get()) {
-                Vec3d cam = mc.gameRenderer.getCamera().getPos();
+
+        // Zombie Villager
+        for (Entity zombieVillager : zombieVillagerList) {
+            // Bounding Box
+            event.renderer.box(
+                zombieVillager.getBoundingBox(),
+                zombieVillagerColor.get(),
+                zombieVillagerColor.get(),
+                ShapeMode.Lines,
+                0
+            );
+
+            // Tracer
+            if (showTracers.get()) {
                 event.renderer.line(
-                    cam.x, cam.y, cam.z,
+                    start.x, start.y, start.z,
                     zombieVillager.getX(),
                     zombieVillager.getY() + zombieVillager.getHeight() / 2,
                     zombieVillager.getZ(),
@@ -106,4 +137,6 @@ public class VillagerEsp extends Module {
             }
         }
     }
+
+
 }
