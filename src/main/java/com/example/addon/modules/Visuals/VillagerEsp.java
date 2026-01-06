@@ -20,34 +20,42 @@ import meteordevelopment.meteorclient.settings.Setting;
 public class VillagerEsp extends Module {
     private final List<Entity> villagerList = new ArrayList<>();
     private final List<Entity> zombieVillagerList = new ArrayList<>();
-    private final SettingGroup sgGeneral = settings.getDefaultGroup();
+    private final SettingGroup sgVillager = settings.createGroup("Villager");
+    private final SettingGroup sgZombie = settings.createGroup("Zombie");
+    private final SettingGroup sgTracer = settings.createGroup("Tracer");
 
-    private final Setting<Boolean> showVillager= sgGeneral.add(new BoolSetting.Builder()
+    private final Setting<Boolean> showVillager= sgVillager.add(new BoolSetting.Builder()
         .name("Villagers")
         .description("Enable Villager ESP")
         .defaultValue(true)
         .build()
-
     );
-    private final Setting<SettingColor> villagerColor = sgGeneral.add(new ColorSetting.Builder()
+
+    private final Setting<SettingColor> villagerColor = sgVillager.add(new ColorSetting.Builder()
         .name("Villager ESP Color")
         .description("Change the ESP Color of the Villagers Bounding Box")
         .defaultValue(new Color(9, 224, 92))
         .build()
     );
-    private final Setting<SettingColor> zombieVillagerColor = sgGeneral.add(new ColorSetting.Builder()
+
+    private final Setting<SettingColor> zombieVillagerColor = sgZombie.add(new ColorSetting.Builder()
         .name("Zombie Villager ESP Color")
         .description("Change the ESP Color of the Zombie Villagers Bounding Box")
         .defaultValue(new Color(194, 41, 49))
         .build()
     );
 
-    private final Setting<Boolean> showZombieVillager = sgGeneral.add(new BoolSetting.Builder()
+    private final Setting<Boolean> showZombieVillager = sgZombie.add(new BoolSetting.Builder()
         .name("Zombie Villagers")
         .description("Enable Zombie Villager ESP")
         .defaultValue(true)
         .build()
+    );
 
+    private final Setting<Boolean> showTracers = sgTracer.add(new BoolSetting.Builder()
+        .name("Show Tracers")
+        .defaultValue(true)
+        .build()
     );
 
     public VillagerEsp() {
@@ -59,23 +67,26 @@ public class VillagerEsp extends Module {
         if (mc == null || mc.player == null || mc.world == null) return;
         villagerList.clear();
         zombieVillagerList.clear();
-        mc.world.getEntities().forEach(entity -> {
-            if (showVillager.get() && entity instanceof VillagerEntity) villagerList.add(entity);
-            if (showZombieVillager.get() && entity instanceof ZombieVillagerEntity) zombieVillagerList.add(entity);
-        });
-
+        for (Entity entity : mc.world.getEntities()) {
+            if (entity instanceof VillagerEntity && showVillager.get()) villagerList.add(entity);
+            else if (entity instanceof ZombieVillagerEntity && showZombieVillager.get()) zombieVillagerList.add(entity);
+        }
     }
 
     @EventHandler
     private void onRender(Render3DEvent event){
-
+        if (mc == null || mc.player == null || mc.world == null) return;
         for (Entity villager: villagerList){
             event.renderer.box(villager.getBoundingBox(), villagerColor.get(), villagerColor.get(), ShapeMode.Lines, 0);
-
+            if(showTracers.get()){
+                event.renderer.line(villager.getX(), villager.getY(), villager.getZ(), mc.player.getX(), mc.player.getEyeY(), mc.player.getZ(), villagerColor.get(), villagerColor.get());
+            }
         }
         for (Entity zombieVillager: zombieVillagerList){
             event.renderer.box(zombieVillager.getBoundingBox(), zombieVillagerColor.get(), zombieVillagerColor.get(), ShapeMode.Lines, 0);
+            if(showTracers.get()) {
+                event.renderer.line(zombieVillager.getX(), zombieVillager.getY(), zombieVillager.getZ(), mc.player.getX(), mc.player.getEyeY(), mc.player.getZ(), zombieVillagerColor.get(), zombieVillagerColor.get());
+            }
         }
     }
-
 }
