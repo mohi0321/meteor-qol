@@ -13,7 +13,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import java.io.FileWriter;
 import java.io.IOException;
 
-class rtpHeatMap extends Module {
+public class rtpHeatMap extends Module {
     private final SettingGroup sgDimension = settings.createGroup("Dimension");
     private final SettingGroup sgDelay = settings.createGroup("Delay");
 
