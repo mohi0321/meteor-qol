@@ -1,4 +1,4 @@
-package com.example.addon.modules.Automation;
+/*package com.example.addon.modules.Automation;
 
 import com.example.addon.Enhanced;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
@@ -361,3 +361,4 @@ public class AutoLibrarian extends Module {
         }
     }
 }
+*/

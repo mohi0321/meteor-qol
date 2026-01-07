@@ -9,6 +9,8 @@ import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
@@ -29,7 +31,7 @@ public class AutoAuction extends Module {
     private final Setting<Integer> delay = sgGeneral.add(
         new IntSetting.Builder()
             .name("delay")
-            .description("The delay between auctions.")
+            .description("The delay between auctions in seconds.")
             .defaultValue(10)
             .min(0)
             .max(60)
@@ -39,7 +41,7 @@ public class AutoAuction extends Module {
     private final Setting<Boolean> repeat = sgGeneral.add(
         new BoolSetting.Builder()
             .name("repeat")
-            .description("Repeat auctions.")
+            .description("Repeat auctions automatically.")
             .defaultValue(false)
             .build()
     );
@@ -99,7 +101,8 @@ public class AutoAuction extends Module {
                     return;
                 }
 
-                assert mc.interactionManager != null;
+                if (mc.interactionManager == null) return;
+
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     53,
@@ -111,8 +114,13 @@ public class AutoAuction extends Module {
                 timer = 20;
             }
             case FIND_ITEM -> {
-                // String -> Identifier -> Item
                 Identifier id = Identifier.tryParse(item.get());
+                if (id == null) {
+                    ChatUtils.error("Invalid item ID: " + item.get());
+                    toggle();
+                    return;
+                }
+
                 Item targetItem = Registries.ITEM.get(id);
                 FindItemResult result = InvUtils.find(targetItem);
 
@@ -122,7 +130,8 @@ public class AutoAuction extends Module {
                     return;
                 }
 
-                assert mc.interactionManager != null;
+                if (mc.interactionManager == null || mc.player.currentScreenHandler == null) return;
+
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     result.slot(),
@@ -134,7 +143,8 @@ public class AutoAuction extends Module {
                 timer = 20;
             }
             case PLACE_ITEM -> {
-                assert mc.interactionManager != null;
+                if (mc.interactionManager == null || mc.player.currentScreenHandler == null) return;
+
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     6,
@@ -147,22 +157,29 @@ public class AutoAuction extends Module {
             }
             case ENTER_PRICE -> {
                 if (mc.currentScreen instanceof SignEditScreen screen) {
+                    // Preis als Zeichen eingeben
                     String text = String.valueOf(priceSetting.get());
                     for (char c : text.toCharArray()) {
-                        screen.charTyped(c, 0);
+                        screen.charTyped(new CharInput(c, 0)); // 2 Argumente: char + modifiers
                     }
-                    // Schild bestätigen
-                    screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
+
+                    // Schild schließen / ESC
+                    screen.keyPressed(new KeyInput(GLFW.GLFW_KEY_ESCAPE, 0, 0)); // 3 Argumente: keyCode, scanCode, modifiers
                 }
+
                 step = Step.EXIT_SIGN;
                 timer = 20;
             }
+
+
+
             case EXIT_SIGN -> {
                 step = Step.CONFIRM_AUCTION;
                 timer = 20;
             }
             case CONFIRM_AUCTION -> {
-                assert mc.interactionManager != null;
+                if (mc.interactionManager == null || mc.player.currentScreenHandler == null) return;
+
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     6,
