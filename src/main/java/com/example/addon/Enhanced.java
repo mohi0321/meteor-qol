@@ -7,6 +7,7 @@ import com.example.addon.modules.Visuals.InventoryInteractionDebug;
 import com.example.addon.modules.Automation.EnchantedBookBuyer;
 import com.example.addon.commands.CommandExample;
 import com.example.addon.hud.HudExample;
+import com.example.addon.modules.Visuals.rtpHeatMap;
 import com.mojang.logging.LogUtils;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
@@ -16,7 +17,6 @@ import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
-import com.example.addon.modules.Visuals.rtpHeatMap;
 
 public class Enhanced extends MeteorAddon {
     public static final Logger LOG = LogUtils.getLogger();
