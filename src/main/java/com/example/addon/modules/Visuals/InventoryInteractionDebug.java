@@ -15,7 +15,13 @@ public class InventoryInteractionDebug extends Module {
     @EventHandler
     private void onSendPacket(PacketEvent.Send event) {
         if (event.packet instanceof ClickSlotC2SPacket packet) {
-            ChatUtils.info("Slot ID: " + packet.getSlot());
+            // Safely get slot ID
+            try {
+                int slot = packet.getSlot(); // should still exist in 1.21.10 mappings, but check
+                ChatUtils.info("Slot ID: " + slot);
+            } catch (Exception e) {
+                ChatUtils.error("Failed to get slot info from ClickSlotC2SPacket.");
+            }
         }
     }
 }
