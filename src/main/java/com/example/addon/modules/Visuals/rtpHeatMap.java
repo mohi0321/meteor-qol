@@ -10,7 +10,6 @@ import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -36,48 +35,41 @@ public class rtpHeatMap extends Module {
     public rtpHeatMap() {
         super(Enhanced.Visuals, "rtp-heatmap", "Collects location data from RTPs for a heatmap");
     }
-    private Vec2f pp;
-    private enum State { IDLE, WAITING, DELAY }
-    private State state = State.IDLE;
+
+    private Vec2f lastPos = null;
     private int tickDelayCounter = 0;
+    private boolean waitingForMove = false;
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (mc.player == null || mc.world == null) return;
 
-        switch (state) {
-            case IDLE -> {
-                ChatUtils.sendPlayerMsg("/rtp");
-                pp = new Vec2f(
-                    (float) mc.player.getX(),
-                    (float) mc.player.getZ()
-                );
-                tickDelayCounter = delay.get()*20;
-                state = State.DELAY;
-            }
+        // Wenn wir gerade warten, bis der Spieler sich bewegt
+        if (waitingForMove) {
+            Vec2f currentPos = new Vec2f((float) mc.player.getX(), (float) mc.player.getZ());
+            float dx = currentPos.x - lastPos.x;
+            float dz = currentPos.y - lastPos.y;
+            float distance = (float) Math.sqrt(dx * dx + dz * dz);
 
-            case DELAY -> {
-                if (tickDelayCounter > 0) {
-                    tickDelayCounter--;
-                } else {
-                    state = State.WAITING;
-                }
+            if (distance > 0.1f) { // Spieler hat sich bewegt
+                clickSlot();
+                writeData();
+                tickDelayCounter = delay.get();
+                waitingForMove = false;
             }
-
-            case WAITING -> {
-                Vec2f lp = new Vec2f(
-                    (float) mc.player.getX(),
-                    (float) mc.player.getZ()
-                );
-                boolean moved = !lp.equals(pp);
-                if (moved) {
-                    clickSlot();
-                    writeData();
-                    tickDelayCounter = delay.get()*20;
-                    state = State.DELAY;
-                }
-            }
+            return;
         }
+
+        // Delay läuft noch
+        if (tickDelayCounter > 0) {
+            tickDelayCounter--;
+            return;
+        }
+
+        // Neues RTP starten
+        ChatUtils.sendPlayerMsg("/rtp");
+        lastPos = new Vec2f((float) mc.player.getX(), (float) mc.player.getZ());
+        waitingForMove = true;
     }
 
     private void clickSlot() {
@@ -95,7 +87,7 @@ public class rtpHeatMap extends Module {
     private void writeData() {
         try (FileWriter writer = new FileWriter("rtp_heatmap.csv", true)) {
             if (mc.player != null) {
-                writer.write(mc.player.getX() + " " + mc.player.getZ() + "\n");
+                writer.write(mc.player.getX() + "," + mc.player.getZ() + "\n");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
