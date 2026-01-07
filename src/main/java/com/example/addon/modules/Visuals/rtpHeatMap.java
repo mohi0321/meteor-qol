@@ -9,6 +9,7 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
 import java.io.FileWriter;
@@ -35,10 +36,9 @@ public class rtpHeatMap extends Module {
     public rtpHeatMap() {
         super(Enhanced.Visuals, "rtp-heatmap", "Collects location data from RTPs for a heatmap");
     }
-
+    private Vec2f pp;
     private enum State { IDLE, WAITING, DELAY }
     private State state = State.IDLE;
-    private Vec3d pp;
     private int tickDelayCounter = 0;
 
     @EventHandler
@@ -48,7 +48,10 @@ public class rtpHeatMap extends Module {
         switch (state) {
             case IDLE -> {
                 ChatUtils.sendPlayerMsg("/rtp");
-                pp = mc.player.getPos();
+                pp = new Vec2f(
+                    (float) mc.player.getX(),
+                    (float) mc.player.getZ()
+                );
                 tickDelayCounter = delay.get()*20;
                 state = State.DELAY;
             }
@@ -62,7 +65,11 @@ public class rtpHeatMap extends Module {
             }
 
             case WAITING -> {
-                boolean moved = !mc.player.getPos().equals(pp);
+                Vec2f lp = new Vec2f(
+                    (float) mc.player.getX(),
+                    (float) mc.player.getZ()
+                );
+                boolean moved = !lp.equals(pp);
                 if (moved) {
                     clickSlot();
                     writeData();

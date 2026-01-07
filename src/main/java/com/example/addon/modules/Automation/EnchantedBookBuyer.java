@@ -102,13 +102,13 @@ public class EnchantedBookBuyer extends Module {
             .map(e -> (VillagerEntity) e)
             .filter(e -> !e.isRemoved() && e.getHealth() > 0)
             .filter(e -> e.getVillagerData() != null)
-            .filter(e -> e.getVillagerData().getProfession() == VillagerProfession.LIBRARIAN)
+            .filter(e -> e.getVillagerData().profession() == VillagerProfession.LIBRARIAN)
             .filter(e -> !visitedVillagers.contains(e.getId()))
             .filter(e -> mc.player.canSee(e))
             .min(Comparator.comparingDouble(e -> mc.player.squaredDistanceTo(e)))
             .orElse(null);
 
-        currentState = (targetVillager != null) ? State.TRAVELLING : State.DROPPING;
+        currentState = State.TRAVELLING;
     }
 
     /* ---------------- TRAVELLING ---------------- */
@@ -138,6 +138,7 @@ public class EnchantedBookBuyer extends Module {
 
         if (!(mc.player.currentScreenHandler instanceof MerchantScreenHandler handler)) {
             Rotations.rotate(Rotations.getYaw(targetVillager), Rotations.getPitch(targetVillager));
+            assert mc.interactionManager != null;
             mc.interactionManager.interactEntity(mc.player, targetVillager, Hand.MAIN_HAND);
             timer = (int) (delay.get() * 20);
             return;
@@ -151,7 +152,7 @@ public class EnchantedBookBuyer extends Module {
 
         for (int i = 0; i < offers.size(); i++) {
             TradeOffer offer = offers.get(i);
-            if (offer != null && isValidTrade(offer) && !offer.isDisabled()
+            if (isValidTrade(offer) && !offer.isDisabled()
                 && mc.player.getInventory().getEmptySlot() != -1) {
 
                 if (mc.getNetworkHandler() != null) {

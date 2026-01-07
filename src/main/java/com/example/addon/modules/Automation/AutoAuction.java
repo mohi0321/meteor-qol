@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -100,6 +99,7 @@ public class AutoAuction extends Module {
                     return;
                 }
 
+                assert mc.interactionManager != null;
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     53,
@@ -122,6 +122,7 @@ public class AutoAuction extends Module {
                     return;
                 }
 
+                assert mc.interactionManager != null;
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     result.slot(),
@@ -133,6 +134,7 @@ public class AutoAuction extends Module {
                 timer = 20;
             }
             case PLACE_ITEM -> {
+                assert mc.interactionManager != null;
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     6,
@@ -160,6 +162,7 @@ public class AutoAuction extends Module {
                 timer = 20;
             }
             case CONFIRM_AUCTION -> {
+                assert mc.interactionManager != null;
                 mc.interactionManager.clickSlot(
                     mc.player.currentScreenHandler.syncId,
                     6,
@@ -167,7 +170,7 @@ public class AutoAuction extends Module {
                     SlotActionType.PICKUP,
                     mc.player
                 );
-                
+
                 if (repeat.get()) {
                     step = Step.OPEN_AH;
                     timer = delay.get() * 20;
