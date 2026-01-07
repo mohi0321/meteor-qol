@@ -16,7 +16,7 @@ import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
-import com.example.addon.modules.Visuals.rtpHeatmap;
+import com.example.addon.modules.Visuals.rtpHeatMap;
 
 public class Enhanced extends MeteorAddon {
     public static final Logger LOG = LogUtils.getLogger();
@@ -38,7 +38,7 @@ public class Enhanced extends MeteorAddon {
         Modules.get().add(new AutoAuction());
         Modules.get().add(new EnchantedBookBuyer());
         Modules.get().add(new VillagerEsp());
-        Modules.get().add(new rtpHeatmap());
+        Modules.get().add(new rtpHeatMap());
 
         // Commands
         Commands.add(new CommandExample());
