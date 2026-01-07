@@ -1,5 +1,5 @@
 package com.example.addon;
-import com.example.addon.modules.Automation.AutoLibrarian;
+//import com.example.addon.modules.Automation.AutoLibrarian;
 import com.example.addon.modules.Automation.AutoAuction;
 import com.example.addon.modules.Automation.AutoChat;
 import com.example.addon.modules.Visuals.VillagerEsp;
@@ -32,7 +32,7 @@ public class Enhanced extends MeteorAddon {
         LOG.info("Initializing Meteor Addon Template");
 
         // Modules
-        Modules.get().add(new AutoLibrarian());
+        //Modules.get().add(new AutoLibrarian());
         Modules.get().add(new AutoChat());
         Modules.get().add(new InventoryInteractionDebug());
         Modules.get().add(new AutoAuction());
